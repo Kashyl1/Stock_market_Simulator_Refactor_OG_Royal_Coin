@@ -1,0 +1,12 @@
+dependencies {
+	api 'org.springframework:spring-context'
+	api 'org.springframework:spring-tx'
+	api 'org.springframework.data:spring-data-jpa'
+	api 'jakarta.persistence:jakarta.persistence-api'
+
+	implementation 'tools.jackson.core:jackson-databind'
+	implementation 'org.slf4j:slf4j-api'
+}
+
+tasks.matching { it.name == 'bootJar' }.configureEach { enabled = false }
+jar { enabled = true }

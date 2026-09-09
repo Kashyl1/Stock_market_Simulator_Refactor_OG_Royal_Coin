@@ -1,0 +1,37 @@
+<main class="shell">
+  <header>
+    <h1>trading_simulator_refactor</h1>
+    <p class="subtitle">Angular {{ angularVersion }} &middot; Spring Boot &middot; PostgreSQL</p>
+  </header>
+
+  <section class="card" [attr.data-status]="status()">
+    <div class="card__head">
+      <span class="dot" aria-hidden="true"></span>
+      <strong>Backend</strong>
+      <span class="muted">GET {{ apiUrl }}/health</span>
+    </div>
+
+    @switch (status()) {
+      @case ('checking') {
+        <p>Checking connection&hellip;</p>
+      }
+      @case ('online') {
+        <p>Connected &mdash; service reports <code>{{ health()?.status }}</code>.</p>
+        <dl>
+          <div><dt>service</dt><dd>{{ health()?.service }}</dd></div>
+          <div><dt>timestamp</dt><dd>{{ health()?.timestamp }}</dd></div>
+        </dl>
+      }
+      @case ('offline') {
+        <p>Not reachable. Start the backend: <code>./gradlew bootRun</code></p>
+        @if (error()) {
+          <p class="muted">{{ error() }}</p>
+        }
+      }
+    }
+
+    <button type="button" (click)="check()">Retry</button>
+  </section>
+
+  <router-outlet />
+</main>

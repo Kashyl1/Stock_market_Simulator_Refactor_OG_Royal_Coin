@@ -1,0 +1,24 @@
+# ---- IDE ----
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.project
+.classpath
+.settings/
+out/
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+
+# ---- Local env overrides ----
+.env
+*.local.env
+
+# ---- Local-only agent/dev notes (not shared) ----
+Important/
+
+# Backend and frontend keep their own .gitignore files for stack-specific paths
+# (backend/.gitignore -> .gradle/, build/ ; frontend/.gitignore -> node_modules/, dist/, .angular/)
