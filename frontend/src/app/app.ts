@@ -1,9 +1,15 @@
-import { Component, VERSION, inject, signal } from '@angular/core';
+import { Component, VERSION, computed, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { BackendService, HealthResponse } from './core/backend.service';
+import { BackendService, HEALTH_PATH } from './core/backend.service';
 import { environment } from '../environments/environment';
 
-type ConnectionStatus = 'checking' | 'online' | 'offline';
+export const ConnectionStatus = {
+  Checking: 'checking',
+  Online: 'online',
+  Offline: 'offline',
+} as const;
+
+export type ConnectionStatus = (typeof ConnectionStatus)[keyof typeof ConnectionStatus];
 
 @Component({
   selector: 'app-root',
@@ -15,28 +21,26 @@ export class App {
   private readonly backend = inject(BackendService);
 
   protected readonly angularVersion = VERSION.full;
-  protected readonly apiUrl = environment.apiUrl;
+  protected readonly healthUrl = `${environment.apiUrl}${HEALTH_PATH}`;
+  protected readonly statuses = ConnectionStatus;
 
-  protected readonly status = signal<ConnectionStatus>('checking');
-  protected readonly health = signal<HealthResponse | null>(null);
-  protected readonly error = signal<string | null>(null);
+  protected readonly health = this.backend.health();
 
-  constructor() {
-    this.check();
-  }
+  protected readonly status = computed<ConnectionStatus>(() => {
+    switch (this.health.status()) {
+      case 'resolved':
+      case 'local':
+        return ConnectionStatus.Online;
+      case 'error':
+        return ConnectionStatus.Offline;
+      default:
+        return ConnectionStatus.Checking;
+    }
+  });
+
+  protected readonly errorMessage = computed(() => this.health.error()?.message ?? null);
 
   protected check(): void {
-    this.status.set('checking');
-    this.error.set(null);
-    this.backend.health().subscribe({
-      next: (res) => {
-        this.health.set(res);
-        this.status.set('online');
-      },
-      error: (err: unknown) => {
-        this.error.set(err instanceof Error ? err.message : 'Request failed');
-        this.status.set('offline');
-      },
-    });
+    this.health.reload();
   }
 }

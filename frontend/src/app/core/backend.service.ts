@@ -1,7 +1,8 @@
-import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { HttpResourceRef, httpResource } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
+
+export const HEALTH_PATH = '/health';
 
 export interface HealthResponse {
   status: string;
@@ -11,10 +12,9 @@ export interface HealthResponse {
 
 @Injectable({ providedIn: 'root' })
 export class BackendService {
-  private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl;
 
-  health(): Observable<HealthResponse> {
-    return this.http.get<HealthResponse>(`${this.baseUrl}/health`);
+  health(): HttpResourceRef<HealthResponse | undefined> {
+    return httpResource<HealthResponse>(() => `${this.baseUrl}${HEALTH_PATH}`);
   }
 }

@@ -8,24 +8,33 @@
     <div class="card__head">
       <span class="dot" aria-hidden="true"></span>
       <strong>Backend</strong>
-      <span class="muted">GET {{ apiUrl }}/health</span>
+      <span class="muted">GET {{ healthUrl }}</span>
     </div>
 
     @switch (status()) {
-      @case ('checking') {
+      @case (statuses.Checking) {
         <p>Checking connection&hellip;</p>
       }
-      @case ('online') {
-        <p>Connected &mdash; service reports <code>{{ health()?.status }}</code>.</p>
+      @case (statuses.Online) {
+        <p>
+          Connected &mdash; service reports <code>{{ health.value()?.status }}</code
+          >.
+        </p>
         <dl>
-          <div><dt>service</dt><dd>{{ health()?.service }}</dd></div>
-          <div><dt>timestamp</dt><dd>{{ health()?.timestamp }}</dd></div>
+          <div>
+            <dt>service</dt>
+            <dd>{{ health.value()?.service }}</dd>
+          </div>
+          <div>
+            <dt>timestamp</dt>
+            <dd>{{ health.value()?.timestamp }}</dd>
+          </div>
         </dl>
       }
-      @case ('offline') {
+      @case (statuses.Offline) {
         <p>Not reachable. Start the backend: <code>./gradlew bootRun</code></p>
-        @if (error()) {
-          <p class="muted">{{ error() }}</p>
+        @if (errorMessage(); as message) {
+          <p class="muted">{{ message }}</p>
         }
       }
     }
