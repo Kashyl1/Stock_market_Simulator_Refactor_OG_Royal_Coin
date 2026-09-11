@@ -7,13 +7,15 @@ import org.junit.jupiter.api.Test;
 
 class ProcessDefinitionBuilderTest {
 
+	private static final String PROCESS_KEY = "P";
+
 	enum S implements StepKey { A, B, C, D }
 
 	enum O implements Outcome { GO, ALT }
 
 	@Test
 	void buildsValidLinearProcess() {
-		ProcessDefinition<Ctx> def = ProcessDefinition.builder("P", Ctx.class)
+		ProcessDefinition<Ctx> def = ProcessDefinition.builder(PROCESS_KEY, Ctx.class)
 				.start(S.A)
 				.step(S.A).on(O.GO).goTo(S.B)
 				.step(S.B).end()
@@ -27,7 +29,7 @@ class ProcessDefinitionBuilderTest {
 
 	@Test
 	void branchingStepKeepsBothTransitions() {
-		ProcessDefinition<Ctx> def = ProcessDefinition.builder("P", Ctx.class)
+		ProcessDefinition<Ctx> def = ProcessDefinition.builder(PROCESS_KEY, Ctx.class)
 				.start(S.A)
 				.step(S.A).on(O.GO).goTo(S.B)
 				.step(S.A).on(O.ALT).goTo(S.C)
@@ -42,7 +44,7 @@ class ProcessDefinitionBuilderTest {
 
 	@Test
 	void missingStartStepFails() {
-		assertThatThrownBy(() -> ProcessDefinition.builder("P", Ctx.class)
+		assertThatThrownBy(() -> ProcessDefinition.builder(PROCESS_KEY, Ctx.class)
 				.step(S.A).end()
 				.build())
 				.isInstanceOf(ProcessDefinitionException.class)
@@ -51,7 +53,7 @@ class ProcessDefinitionBuilderTest {
 
 	@Test
 	void nonEndStepWithoutOutgoingFails() {
-		assertThatThrownBy(() -> ProcessDefinition.builder("P", Ctx.class)
+		assertThatThrownBy(() -> ProcessDefinition.builder(PROCESS_KEY, Ctx.class)
 				.start(S.A)
 				.build())
 				.isInstanceOf(ProcessDefinitionException.class)
@@ -60,7 +62,7 @@ class ProcessDefinitionBuilderTest {
 
 	@Test
 	void endStepWithOutgoingFails() {
-		assertThatThrownBy(() -> ProcessDefinition.builder("P", Ctx.class)
+		assertThatThrownBy(() -> ProcessDefinition.builder(PROCESS_KEY, Ctx.class)
 				.start(S.A)
 				.step(S.A).on(O.GO).goTo(S.B)
 				.step(S.B).end()
@@ -72,7 +74,7 @@ class ProcessDefinitionBuilderTest {
 
 	@Test
 	void unreachableStepFails() {
-		assertThatThrownBy(() -> ProcessDefinition.builder("P", Ctx.class)
+		assertThatThrownBy(() -> ProcessDefinition.builder(PROCESS_KEY, Ctx.class)
 				.start(S.A)
 				.step(S.A).on(O.GO).goTo(S.B)
 				.step(S.B).end()
@@ -85,7 +87,7 @@ class ProcessDefinitionBuilderTest {
 
 	@Test
 	void duplicateOutcomeOnSameStepFails() {
-		assertThatThrownBy(() -> ProcessDefinition.builder("P", Ctx.class)
+		assertThatThrownBy(() -> ProcessDefinition.builder(PROCESS_KEY, Ctx.class)
 				.start(S.A)
 				.step(S.A).on(O.GO).goTo(S.B)
 				.step(S.A).on(O.GO).goTo(S.C)

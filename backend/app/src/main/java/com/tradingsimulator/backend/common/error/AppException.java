@@ -2,6 +2,9 @@ package com.tradingsimulator.backend.common.error;
 
 public class AppException extends RuntimeException {
 
+	private static final String PLACEHOLDER_START = "{";
+	private static final String PLACEHOLDER_END = "}";
+
 	private final transient ErrorCode errorCode;
 	private final transient Object[] args;
 
@@ -31,7 +34,7 @@ public class AppException extends RuntimeException {
 		}
 		String result = template;
 		for (int i = 0; i < args.length; i++) {
-			result = result.replace("{" + i + "}", String.valueOf(args[i]));
+			result = result.replace(PLACEHOLDER_START + i + PLACEHOLDER_END, String.valueOf(args[i]));
 		}
 		return result;
 	}

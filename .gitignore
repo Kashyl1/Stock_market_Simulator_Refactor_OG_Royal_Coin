@@ -19,6 +19,8 @@ Thumbs.db
 
 # ---- Local-only agent/dev notes (not shared) ----
 Important/
+/CLAUDE.md
+/.claude/
 
 # Backend and frontend keep their own .gitignore files for stack-specific paths
 # (backend/.gitignore -> .gradle/, build/ ; frontend/.gitignore -> node_modules/, dist/, .angular/)
