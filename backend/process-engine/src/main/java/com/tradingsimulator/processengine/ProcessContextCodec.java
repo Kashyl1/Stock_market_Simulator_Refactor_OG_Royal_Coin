@@ -4,7 +4,6 @@ import org.springframework.stereotype.Component;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.json.JsonMapper;
 
 @Component
 public class ProcessContextCodec {
@@ -13,10 +12,6 @@ public class ProcessContextCodec {
 
 	public ProcessContextCodec(ObjectMapper mapper) {
 		this.mapper = mapper;
-	}
-
-	public ProcessContextCodec() {
-		this(JsonMapper.builder().build());
 	}
 
 	public String encode(ProcessContext context) {

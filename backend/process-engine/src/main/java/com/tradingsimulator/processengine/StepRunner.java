@@ -20,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class StepRunner {
 
+	static final String REWIND_DISPOSITION = "REWIND";
+
 	private final ProcessRegistry registry;
 	private final ProcessInstanceStore store;
 	private final ProcessContextCodec codec;
@@ -42,12 +44,7 @@ public class StepRunner {
 			result = invokeListener(def, step, instanceId, context, input);
 		}
 		catch (RuntimeException ex) {
-			log.error("Step '{}' of process '{}' (instance {}) threw", step.name(), def.key(), instanceId, ex);
-			record.status(ProcessStatus.FAILED);
-			record.updatedAt(Instant.now());
-			store.save(record);
-			appendLog(record, step, null, StepResult.Disposition.FAILED, startedAt, ex.toString(), contextBefore);
-			return new StepProgress(ProcessStatus.FAILED, null);
+			throw new StepListenerException(startedAt, ex);
 		}
 
 		record.contextJson(codec.encode(context));
@@ -69,6 +66,40 @@ public class StepRunner {
 			}
 			case ADVANCE -> advance(def, step, record, result.outcome().orElseThrow(), startedAt, contextBefore);
 		};
+	}
+
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public void recordFailure(UUID instanceId, Instant startedAt, String error) {
+		ProcessRecord record = store.find(instanceId)
+				.orElseThrow(() -> new ProcessInstanceNotFoundException(instanceId));
+		StepKey step = resolveStep(registry.definition(record.definitionKey()), record.currentStep());
+		record.status(ProcessStatus.FAILED);
+		record.updatedAt(Instant.now());
+		store.save(record);
+		appendLog(record, step, null, StepResult.Disposition.FAILED, startedAt, error, record.contextJson());
+	}
+
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public void rewind(UUID instanceId, String stepName) {
+		ProcessRecord record = store.find(instanceId)
+				.orElseThrow(() -> new ProcessInstanceNotFoundException(instanceId));
+		if (record.status() != ProcessStatus.RUNNING && record.status() != ProcessStatus.WAITING) {
+			throw new ProcessClosedException(instanceId, record.status());
+		}
+		resolveStep(registry.definition(record.definitionKey()), stepName);
+		String snapshot = store.latestContextBefore(instanceId, stepName)
+				.orElseThrow(() -> new ProcessExecutionException("step '" + stepName + "' has not run on instance "
+						+ instanceId + "; nothing to rewind to"));
+
+		Instant now = Instant.now();
+		store.appendLog(new StepLogAppend(instanceId, store.stepCount(instanceId), stepName, null, REWIND_DISPOSITION,
+				now, now, "rewound from " + record.currentStep(), record.contextJson()));
+
+		record.contextJson(snapshot);
+		record.currentStep(stepName);
+		record.status(ProcessStatus.RUNNING);
+		record.updatedAt(now);
+		store.save(record);
 	}
 
 	private StepProgress advance(ProcessDefinition<?> def, StepKey step, ProcessRecord record, Outcome outcome,

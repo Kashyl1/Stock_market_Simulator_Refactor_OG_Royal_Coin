@@ -2,12 +2,10 @@ package com.tradingsimulator.backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.persistence.autoconfigure.EntityScan;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
-@SpringBootApplication(scanBasePackages = "com.tradingsimulator")
-@EntityScan(basePackages = "com.tradingsimulator")
-@EnableJpaRepositories(basePackages = "com.tradingsimulator")
+@SpringBootApplication
+@ConfigurationPropertiesScan
 public class TradingSimulatorApplication {
 
 	public static void main(String[] args) {

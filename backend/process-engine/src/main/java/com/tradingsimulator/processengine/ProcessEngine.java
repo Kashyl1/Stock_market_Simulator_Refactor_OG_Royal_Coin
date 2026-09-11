@@ -9,13 +9,16 @@ import org.springframework.stereotype.Component;
 
 import com.tradingsimulator.processengine.store.ProcessInstanceStore;
 import com.tradingsimulator.processengine.store.ProcessRecord;
-import com.tradingsimulator.processengine.store.StepLogAppend;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
 public class ProcessEngine {
+
+	public static final int DEFAULT_MAX_TRANSITIONS_PER_RUN = 100;
+	private static final String MAX_TRANSITIONS_PER_RUN =
+			"${process-engine.max-transitions-per-run:" + DEFAULT_MAX_TRANSITIONS_PER_RUN + "}";
 
 	private final ProcessRegistry registry;
 	private final ProcessInstanceStore store;
@@ -25,7 +28,7 @@ public class ProcessEngine {
 
 	public ProcessEngine(ProcessRegistry registry, ProcessInstanceStore store, ProcessContextCodec codec,
 			StepRunner stepRunner,
-			@Value("${process-engine.max-transitions-per-run:100}") int maxTransitionsPerRun) {
+			@Value(MAX_TRANSITIONS_PER_RUN) int maxTransitionsPerRun) {
 		this.registry = registry;
 		this.store = store;
 		this.codec = codec;
@@ -65,30 +68,7 @@ public class ProcessEngine {
 	}
 
 	public ProcessInstanceView rewind(UUID instanceId, String stepName) {
-		ProcessRecord record = store.find(instanceId)
-				.orElseThrow(() -> new ProcessInstanceNotFoundException(instanceId));
-		if (record.status() != ProcessStatus.RUNNING && record.status() != ProcessStatus.WAITING) {
-			throw new ProcessClosedException(instanceId, record.status());
-		}
-		ProcessDefinition<?> def = registry.definition(record.definitionKey());
-		boolean known = def.steps().stream().anyMatch(s -> s.name().equals(stepName));
-		if (!known) {
-			throw new ProcessExecutionException("process '" + def.key() + "' has no step named '" + stepName + "'");
-		}
-		String snapshot = store.latestContextBefore(instanceId, stepName)
-				.orElseThrow(() -> new ProcessExecutionException("step '" + stepName + "' has not run on instance "
-						+ instanceId + "; nothing to rewind to"));
-
-		Instant now = Instant.now();
-		store.appendLog(new StepLogAppend(instanceId, store.stepCount(instanceId), stepName, null, "REWIND",
-				now, now, "rewound from " + record.currentStep(), record.contextJson()));
-
-		record.contextJson(snapshot);
-		record.currentStep(stepName);
-		record.status(ProcessStatus.RUNNING);
-		record.updatedAt(now);
-		store.save(record);
-
+		stepRunner.rewind(instanceId, stepName);
 		log.info("Rewound process instance {} to step {}", instanceId, stepName);
 		return drive(instanceId, null);
 	}
@@ -97,20 +77,30 @@ public class ProcessEngine {
 		Object input = firstInput;
 		int transitions = 0;
 		while (true) {
-			StepRunner.StepProgress progress = stepRunner.runOne(instanceId, input);
+			StepRunner.StepProgress progress = runStep(instanceId, input);
 			input = null;
 
 			if (progress.status() != ProcessStatus.RUNNING) {
 				return view(instanceId);
 			}
 			if (++transitions > maxTransitionsPerRun) {
-				ProcessRecord record = store.find(instanceId)
-						.orElseThrow(() -> new ProcessInstanceNotFoundException(instanceId));
-				record.status(ProcessStatus.FAILED);
-				store.save(record);
-				throw new ProcessExecutionException("process instance " + instanceId + " exceeded "
-						+ maxTransitionsPerRun + " transitions in one run (likely a cycle in the definition)");
+				String reason = "process instance " + instanceId + " exceeded " + maxTransitionsPerRun
+						+ " transitions in one run (likely a cycle in the definition)";
+				stepRunner.recordFailure(instanceId, Instant.now(), reason);
+				throw new ProcessExecutionException(reason);
 			}
+		}
+	}
+
+	private StepRunner.StepProgress runStep(UUID instanceId, Object input) {
+		try {
+			return stepRunner.runOne(instanceId, input);
+		}
+		catch (StepListenerException failure) {
+			log.error("A step listener of process instance {} threw; the step was rolled back", instanceId,
+					failure.getCause());
+			stepRunner.recordFailure(instanceId, failure.startedAt(), failure.getCause().toString());
+			return new StepRunner.StepProgress(ProcessStatus.FAILED, null);
 		}
 	}
 
