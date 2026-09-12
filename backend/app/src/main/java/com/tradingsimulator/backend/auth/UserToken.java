@@ -1,10 +1,9 @@
 package com.tradingsimulator.backend.auth;
 
-import java.util.Optional;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface UserToken extends JpaRepository<UserTokenJpa, Long> {
-
-	Optional<UserTokenJpa> findByTokenHashAndTokenType(String tokenHash, TokenType tokenType);
+@Entity
+@Table(name = "user_token")
+public class UserToken extends UserTokenJpa {
 }
