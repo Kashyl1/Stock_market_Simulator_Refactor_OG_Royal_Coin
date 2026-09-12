@@ -25,6 +25,7 @@ import com.nimbusds.jwt.SignedJWT;
 import com.tradingsimulator.backend.auth.AuthProperties;
 import com.tradingsimulator.backend.auth.Role;
 import com.tradingsimulator.backend.support.TestJwtKeys;
+import com.tradingsimulator.backend.support.TestUsers;
 
 class JwtServiceTest {
 
@@ -36,13 +37,13 @@ class JwtServiceTest {
 	private static final Duration RESET_TOKEN_TTL = Duration.ofHours(1);
 	private static final String FRONTEND_BASE_URL = "http://localhost:4200";
 	private static final long ADMIN_ID = 42L;
-	private static final String ADMIN_EMAIL = "ada@example.com";
-	private static final long USER_ID = 1L;
-	private static final String USER_EMAIL = "x@example.com";
+	private static final String ADMIN_EMAIL = TestUsers.EMAIL;
+	private static final long USER_ID = TestUsers.USER_ID;
+	private static final String USER_EMAIL = TestUsers.OTHER_EMAIL;
 	private static final String FORGED_SIGNATURE_TAIL = "AAAA";
 	private static final String FOREIGN_AUDIENCE = "another-api";
 	private static final String UNKNOWN_ROLE = "ROOT";
-	private static final String NON_NUMERIC_SUBJECT = "ada";
+	private static final String NON_NUMERIC_SUBJECT = TestUsers.DISPLAY_NAME;
 	private static final int TTLS_IN_THE_PAST = 2;
 
 	private static KeyPair rsa;

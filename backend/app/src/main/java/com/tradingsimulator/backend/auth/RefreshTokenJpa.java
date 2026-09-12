@@ -6,13 +6,11 @@ import java.util.UUID;
 import com.tradingsimulator.backend.common.persistence.AbstractEntity;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.Setter;
 
-@Entity
-@Table(name = "refresh_token")
+@MappedSuperclass
 @Getter
 @Setter
 public class RefreshTokenJpa extends AbstractEntity {
