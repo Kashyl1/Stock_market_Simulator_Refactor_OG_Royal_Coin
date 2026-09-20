@@ -1,0 +1,112 @@
+<section class="card form-card">
+  <h1>Create your account</h1>
+  <p class="muted">{{ accountNotice }}</p>
+
+  @if (created(); as registration) {
+    <div class="notice notice--success" role="status">
+      <strong>Account #{{ registration.userId }} created.</strong>
+      @if (awaitingVerification()) {
+        <p class="muted">
+          We sent a verification link to your e-mail address. The account stays pending until you
+          open it.
+        </p>
+      }
+    </div>
+  }
+
+  @if (failure(); as problem) {
+    <div class="notice notice--error" role="alert">{{ problem.message }}</div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="field">
+      <label for="email">E-mail</label>
+      <input
+        id="email"
+        type="email"
+        autocomplete="email"
+        [formControl]="form.controls.email"
+        [attr.maxlength]="emailMaxLength"
+      />
+      @if (form.controls.email.touched && form.controls.email.invalid) {
+        <p class="field__error">Enter a valid e-mail address.</p>
+      }
+      @if (emailFailure(); as message) {
+        <p class="field__error">{{ message }}</p>
+      }
+    </div>
+
+    <div class="field">
+      <label for="displayName">Display name</label>
+      <input
+        id="displayName"
+        type="text"
+        autocomplete="nickname"
+        [formControl]="form.controls.displayName"
+        [attr.maxlength]="displayNameMaxLength"
+      />
+      @if (form.controls.displayName.touched && form.controls.displayName.invalid) {
+        <p class="field__error">Pick a name to show on your portfolios.</p>
+      }
+      @if (displayNameFailure(); as message) {
+        <p class="field__error">{{ message }}</p>
+      }
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <div class="field__control">
+        <input
+          id="password"
+          [type]="passwordFieldType()"
+          autocomplete="new-password"
+          [formControl]="form.controls.password"
+          [attr.maxlength]="passwordMaxLength"
+        />
+        <app-password-visibility-toggle
+          [visible]="passwordsVisible()"
+          (toggled)="togglePasswordVisibility()"
+        />
+      </div>
+      <p class="field__hint">At least {{ passwordMinLength }} characters, and not a common one.</p>
+      @if (form.controls.password.touched && form.controls.password.invalid) {
+        <p class="field__error">Use at least {{ passwordMinLength }} characters.</p>
+      }
+      @if (passwordFailure(); as message) {
+        <p class="field__error">{{ message }}</p>
+      }
+    </div>
+
+    <div class="field">
+      <label for="confirmPassword">Confirm password</label>
+      <div class="field__control">
+        <input
+          id="confirmPassword"
+          [type]="passwordFieldType()"
+          autocomplete="new-password"
+          [formControl]="form.controls.confirmPassword"
+          [attr.maxlength]="passwordMaxLength"
+        />
+        <app-password-visibility-toggle
+          [visible]="passwordsVisible()"
+          (toggled)="togglePasswordVisibility()"
+        />
+      </div>
+      @if (form.controls.confirmPassword.touched && form.hasError(mismatchError)) {
+        <p class="field__error">Both passwords must be the same.</p>
+      }
+    </div>
+
+    <button class="button button--primary" type="submit" [disabled]="submitting()">
+      @if (submitting()) {
+        Creating&hellip;
+      } @else {
+        Create account
+      }
+    </button>
+  </form>
+
+  <p class="muted form-card__footer">
+    Already have an account? <a [routerLink]="paths.Login">Log in</a>
+  </p>
+</section>

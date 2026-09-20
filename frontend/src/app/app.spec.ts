@@ -1,60 +1,36 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { App, ConnectionStatus } from './app';
-import { HEALTH_PATH, HealthResponse } from './core/backend.service';
-import { environment } from '../environments/environment';
+import { provideRouter } from '@angular/router';
+import { App } from './app';
+import { APP_DISCLAIMER, APP_NAME } from './core/app-info';
+import { AppPath } from './core/app-routes';
+import { attributes, element, elements } from './testing/dom';
 
-const HEALTH_URL = `${environment.apiUrl}${HEALTH_PATH}`;
-const APP_TITLE = 'trading_simulator_refactor';
-const TITLE_SELECTOR = 'h1';
-const CARD_SELECTOR = '.card';
-const STATUS_ATTRIBUTE = 'data-status';
-const HEALTHY: HealthResponse = {
-  status: 'UP',
-  service: 'trading-simulator-backend',
-  timestamp: '2026-09-10T12:00:00Z',
-};
-const SERVER_ERROR = { status: 500, statusText: 'Server Error' };
-const SERVER_ERROR_BODY = 'boom';
+const BRAND = '.brand';
+const NAV_LINK = '.top-bar__nav a';
+const OUTLET = 'router-outlet';
+const HREF = 'href';
 
 describe('App', () => {
-  let httpMock: HttpTestingController;
-
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideRouter([])],
     }).compileComponents();
-    httpMock = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => httpMock.verify());
-
-  it('shows the backend as online when the health check answers', async () => {
+  it('shows the product name and keeps a place for the routed page', () => {
     const fixture = TestBed.createComponent(App);
     TestBed.tick();
-    httpMock.expectOne(HEALTH_URL).flush(HEALTHY);
-    await fixture.whenStable();
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector(TITLE_SELECTOR)?.textContent).toContain(APP_TITLE);
-    expect(compiled.querySelector(CARD_SELECTOR)?.getAttribute(STATUS_ATTRIBUTE)).toBe(
-      ConnectionStatus.Online,
-    );
-    expect(compiled.textContent).toContain(HEALTHY.service);
+    expect(element(fixture, BRAND).textContent).toContain(APP_NAME);
+    expect(elements(fixture, OUTLET).length).toBe(1);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(APP_DISCLAIMER);
   });
 
-  it('shows the backend as offline with the failure when the health check fails', async () => {
+  it('links to log in and to registration from the header', () => {
     const fixture = TestBed.createComponent(App);
     TestBed.tick();
-    httpMock.expectOne(HEALTH_URL).flush(SERVER_ERROR_BODY, SERVER_ERROR);
-    await fixture.whenStable();
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector(CARD_SELECTOR)?.getAttribute(STATUS_ATTRIBUTE)).toBe(
-      ConnectionStatus.Offline,
-    );
-    expect(compiled.textContent).toContain(`${SERVER_ERROR.status} ${SERVER_ERROR.statusText}`);
+    expect(attributes(fixture, NAV_LINK, HREF)).toEqual([AppPath.Login, AppPath.Register]);
   });
 });

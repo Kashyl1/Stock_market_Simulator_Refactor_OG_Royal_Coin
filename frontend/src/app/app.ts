@@ -1,46 +1,17 @@
-import { Component, VERSION, computed, inject } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { BackendService, HEALTH_PATH } from './core/backend.service';
-import { environment } from '../environments/environment';
-
-export const ConnectionStatus = {
-  Checking: 'checking',
-  Online: 'online',
-  Offline: 'offline',
-} as const;
-
-export type ConnectionStatus = (typeof ConnectionStatus)[keyof typeof ConnectionStatus];
+import { Component } from '@angular/core';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { APP_DISCLAIMER, APP_NAME } from './core/app-info';
+import { AppPath } from './core/app-routes';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App {
-  private readonly backend = inject(BackendService);
-
-  protected readonly angularVersion = VERSION.full;
-  protected readonly healthUrl = `${environment.apiUrl}${HEALTH_PATH}`;
-  protected readonly statuses = ConnectionStatus;
-
-  protected readonly health = this.backend.health();
-
-  protected readonly status = computed<ConnectionStatus>(() => {
-    switch (this.health.status()) {
-      case 'resolved':
-      case 'local':
-        return ConnectionStatus.Online;
-      case 'error':
-        return ConnectionStatus.Offline;
-      default:
-        return ConnectionStatus.Checking;
-    }
-  });
-
-  protected readonly errorMessage = computed(() => this.health.error()?.message ?? null);
-
-  protected check(): void {
-    this.health.reload();
-  }
+  protected readonly appName = APP_NAME;
+  protected readonly disclaimer = APP_DISCLAIMER;
+  protected readonly paths = AppPath;
+  protected readonly currentYear = new Date().getFullYear();
 }
