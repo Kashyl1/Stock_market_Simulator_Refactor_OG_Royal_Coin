@@ -1,0 +1,52 @@
+<section class="hero">
+  <p class="hero__eyebrow">Simulated trading &middot; play money only</p>
+  <h1>{{ appName }}</h1>
+  <p class="hero__tagline">{{ tagline }}</p>
+
+  <div class="hero__actions">
+    <a class="button button--primary" [routerLink]="paths.Register">Create account</a>
+    <a class="button" [routerLink]="paths.Login">Log in</a>
+  </div>
+
+  <p class="hero__note">{{ disclaimer }}</p>
+</section>
+
+<section class="features" aria-label="What you get">
+  @for (feature of features; track feature.title) {
+    <article class="card feature">
+      <h2>{{ feature.title }}</h2>
+      <p class="muted">{{ feature.description }}</p>
+    </article>
+  }
+</section>
+
+<section class="journey" aria-label="How it works">
+  <h2>How it works</h2>
+  <ol>
+    @for (step of journey; track step.title; let index = $index) {
+      <li>
+        <span class="journey__number" aria-hidden="true">{{ index + 1 }}</span>
+        <div>
+          <strong>{{ step.title }}</strong>
+          <p class="muted">{{ step.description }}</p>
+        </div>
+      </li>
+    }
+  </ol>
+</section>
+
+<p class="status" [attr.data-status]="status()">
+  <span class="dot" aria-hidden="true"></span>
+  <span class="status__label">Backend {{ statusLabel() }}</span>
+  @if (statusDetail(); as detail) {
+    <span class="muted status__detail">{{ detail }}</span>
+  }
+  @if (offline()) {
+    <button class="button button--small" type="button" (click)="check()">Retry</button>
+  }
+</p>
+
+<aside class="card disclaimer" aria-label="Disclaimer">
+  <h2>This is a simulator, not a broker</h2>
+  <p class="muted">{{ legalNotice }}</p>
+</aside>

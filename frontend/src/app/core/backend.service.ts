@@ -5,9 +5,9 @@ import { environment } from '../../environments/environment';
 export const HEALTH_PATH = '/health';
 
 export interface HealthResponse {
-  status: string;
-  service: string;
-  timestamp: string;
+  readonly status: string;
+  readonly service: string;
+  readonly timestamp: string;
 }
 
 @Injectable({ providedIn: 'root' })

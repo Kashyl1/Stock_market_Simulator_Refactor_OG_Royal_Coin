@@ -1,0 +1,126 @@
+:host {
+  display: grid;
+  gap: var(--space-xl);
+}
+
+.hero {
+  display: grid;
+  gap: var(--space-sm);
+  justify-items: start;
+}
+
+.hero__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-accent-strong);
+}
+
+h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+}
+
+.hero__tagline {
+  max-width: 46rem;
+  font-size: 1.1rem;
+  color: var(--color-ink-muted);
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-md);
+}
+
+.feature h2 {
+  font-size: 1.05rem;
+  margin-bottom: var(--space-xs);
+}
+
+.journey h2 {
+  font-size: 1.35rem;
+  margin-bottom: var(--space-md);
+}
+
+.journey ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-md);
+}
+
+.journey li {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: flex-start;
+}
+
+.journey__number {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.9rem;
+}
+
+.status__label {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.75rem;
+}
+
+.status[data-status='online'] .status__label {
+  color: var(--color-positive);
+}
+
+.status[data-status='offline'] .status__label {
+  color: var(--color-negative);
+}
+
+.status__detail {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-ink-subtle);
+}
+
+.status[data-status='checking'] .dot {
+  background: var(--color-warning);
+}
+
+.status[data-status='online'] .dot {
+  background: var(--color-positive);
+}
+
+.status[data-status='offline'] .dot {
+  background: var(--color-negative);
+}
