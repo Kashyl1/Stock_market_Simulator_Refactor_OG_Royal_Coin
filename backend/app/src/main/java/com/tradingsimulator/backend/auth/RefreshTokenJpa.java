@@ -15,6 +15,9 @@ import lombok.Setter;
 @Setter
 public class RefreshTokenJpa extends AbstractEntity {
 
+	public static final int USER_AGENT_MAX_LENGTH = 400;
+	public static final int IP_MAX_LENGTH = 64;
+
 	@Column(name = "user_id", nullable = false)
 	private Long userId;
 
@@ -36,9 +39,9 @@ public class RefreshTokenJpa extends AbstractEntity {
 	@Column(name = "replaced_by")
 	private Long replacedBy;
 
-	@Column(name = "user_agent", length = 400)
+	@Column(name = "user_agent", length = USER_AGENT_MAX_LENGTH)
 	private String userAgent;
 
-	@Column(length = 64)
+	@Column(length = IP_MAX_LENGTH)
 	private String ip;
 }

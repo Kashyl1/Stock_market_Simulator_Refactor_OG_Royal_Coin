@@ -1,6 +1,7 @@
 package com.tradingsimulator.backend.auth;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import com.tradingsimulator.backend.web.ApiPaths;
 
@@ -14,12 +15,10 @@ public final class AuthPaths {
 	public static final String LOGOUT = "/logout";
 	public static final String FORGOT_PASSWORD = "/forgot-password";
 	public static final String RESET_PASSWORD = "/reset-password";
+	public static final String ME = "/me";
 
-	public static final List<String> PUBLIC_ENDPOINTS = List.of(REGISTER, VERIFY_EMAIL, LOGIN, REFRESH, LOGOUT,
-			FORGOT_PASSWORD, RESET_PASSWORD).stream()
-			.map(path -> BASE + path)
-			.toList();
+	public static final List<String> PUBLIC_ENDPOINTS = Stream.of(REGISTER, VERIFY_EMAIL, LOGIN, REFRESH, LOGOUT, FORGOT_PASSWORD, RESET_PASSWORD)
+			.map(path -> BASE + path).toList();
 
-	private AuthPaths() {
-	}
+	private AuthPaths() { }
 }
