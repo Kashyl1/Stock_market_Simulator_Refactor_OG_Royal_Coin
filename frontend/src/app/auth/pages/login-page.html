@@ -2,8 +2,8 @@
   <h1>Log in</h1>
   <p class="muted">Pick up where you left off.</p>
 
-  @if (notice(); as message) {
-    <div class="notice" role="status">{{ message }}</div>
+  @if (failure(); as problem) {
+    <div class="notice notice--error" role="alert">{{ problem.message }}</div>
   }
 
   <form [formGroup]="form" (ngSubmit)="submit()">
@@ -35,7 +35,13 @@
       }
     </div>
 
-    <button class="button button--primary" type="submit">Log in</button>
+    <button class="button button--primary" type="submit" [disabled]="submitting()">
+      @if (submitting()) {
+        Signing in&hellip;
+      } @else {
+        Log in
+      }
+    </button>
   </form>
 
   <p class="muted form-card__footer">

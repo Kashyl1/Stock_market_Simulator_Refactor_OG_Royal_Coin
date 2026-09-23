@@ -1,0 +1,23 @@
+<section class="card form-card">
+  <h1>Verify your e-mail</h1>
+
+  @if (checking()) {
+    <p class="muted">Checking your link&hellip;</p>
+  }
+
+  @if (verified()) {
+    <div class="notice notice--success" role="status">
+      <strong>Your e-mail address is verified.</strong>
+      <p class="muted">The account is active, so you can log in now.</p>
+    </div>
+    <a class="button button--primary" [routerLink]="paths.Login">Log in</a>
+  }
+
+  @if (failure(); as problem) {
+    <div class="notice notice--error" role="alert">{{ problem.message }}</div>
+    <p class="muted">
+      A verification link works once and expires after a day. Register again to get a fresh one:
+      <a [routerLink]="paths.Register">create an account</a>.
+    </p>
+  }
+</section>

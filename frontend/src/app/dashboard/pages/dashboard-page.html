@@ -1,0 +1,25 @@
+<section class="card dashboard">
+  @if (account(); as user) {
+    <p class="dashboard__eyebrow">Signed in as</p>
+    <h1>{{ user.displayName }}</h1>
+
+    <dl>
+      <div>
+        <dt>e-mail</dt>
+        <dd>{{ user.email }}</dd>
+      </div>
+      <div>
+        <dt>role</dt>
+        <dd>{{ user.role }}</dd>
+      </div>
+      <div>
+        <dt>status</dt>
+        <dd>{{ user.status }}</dd>
+      </div>
+    </dl>
+  }
+
+  <p class="muted">
+    Nothing lives here yet. Wallet, portfolios and trading arrive in the next slices.
+  </p>
+</section>

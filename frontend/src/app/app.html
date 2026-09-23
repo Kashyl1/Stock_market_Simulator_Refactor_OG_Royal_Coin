@@ -5,15 +5,25 @@
     <a class="brand" [routerLink]="paths.Home">{{ appName }}</a>
 
     <nav class="top-bar__nav" aria-label="Main">
-      <a class="button button--small" [routerLink]="paths.Login" routerLinkActive="is-active"
-        >Log in</a
-      >
-      <a
-        class="button button--small button--primary"
-        [routerLink]="paths.Register"
-        routerLinkActive="is-active"
-        >Create account</a
-      >
+      @if (currentUser(); as user) {
+        <a
+          class="button button--small"
+          [routerLink]="paths.Dashboard"
+          routerLinkActive="is-active"
+          >{{ user.displayName }}</a
+        >
+        <button class="button button--small" type="button" (click)="signOut()">Log out</button>
+      } @else {
+        <a class="button button--small" [routerLink]="paths.Login" routerLinkActive="is-active"
+          >Log in</a
+        >
+        <a
+          class="button button--small button--primary"
+          [routerLink]="paths.Register"
+          routerLinkActive="is-active"
+          >Create account</a
+        >
+      }
     </nav>
   </div>
 </header>

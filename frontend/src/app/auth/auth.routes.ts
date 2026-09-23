@@ -13,4 +13,9 @@ export const routes: Routes = [
     title: pageTitle('Log in'),
     loadComponent: () => import('./pages/login-page').then((m) => m.LoginPage),
   },
+  {
+    path: AppRoute.VerifyEmail,
+    title: pageTitle('Verify your e-mail'),
+    loadComponent: () => import('./pages/verify-email-page').then((m) => m.VerifyEmailPage),
+  },
 ];

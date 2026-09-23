@@ -1,11 +1,13 @@
-import { Component, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AppPath } from '../../core/app-routes';
+import { Failure, toFailure } from '../../core/error-response';
 import { EMAIL_MAX_LENGTH, PASSWORD_MAX_LENGTH } from '../auth-rules';
-
-export const SIGN_IN_UNAVAILABLE_MESSAGE =
-  'Signing in is not live yet - the login endpoint ships with the next backend slice. Registration already works.';
+import { REDIRECT_PARAM } from '../auth.guard';
+import { AuthService } from '../auth.service';
 
 @Component({
   selector: 'app-login-page',
@@ -14,7 +16,11 @@ export const SIGN_IN_UNAVAILABLE_MESSAGE =
   styleUrl: './login-page.scss',
 })
 export class LoginPage {
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly formBuilder = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly paths = AppPath;
   protected readonly emailMaxLength = EMAIL_MAX_LENGTH;
@@ -25,15 +31,34 @@ export class LoginPage {
     password: ['', [Validators.required, Validators.maxLength(PASSWORD_MAX_LENGTH)]],
   });
 
-  protected readonly notice = signal<string | null>(null);
+  protected readonly submitting = signal(false);
+  protected readonly failure = signal<Failure | null>(null);
 
   protected submit(): void {
+    if (this.submitting()) {
+      return;
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.notice.set(null);
       return;
     }
 
-    this.notice.set(SIGN_IN_UNAVAILABLE_MESSAGE);
+    this.submitting.set(true);
+    this.failure.set(null);
+
+    this.auth
+      .login(this.form.getRawValue())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => this.router.navigateByUrl(this.destination()),
+        error: (error: HttpErrorResponse) => {
+          this.failure.set(toFailure(error));
+          this.submitting.set(false);
+        },
+      });
+  }
+
+  private destination(): string {
+    return this.route.snapshot.queryParamMap.get(REDIRECT_PARAM) ?? AppPath.Dashboard;
   }
 }
