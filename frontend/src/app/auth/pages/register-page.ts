@@ -22,7 +22,7 @@ import {
 import { AuthService, RegisterResponse } from '../auth.service';
 import { PasswordVisibilityToggle } from '../../shared/password-visibility-toggle';
 
-export const PASSWORDS_MISMATCH = 'passwordsMismatch';
+const PASSWORDS_MISMATCH = 'passwordsMismatch';
 
 const RegisterField = {
   Email: 'email',

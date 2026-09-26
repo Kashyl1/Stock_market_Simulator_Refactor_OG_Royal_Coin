@@ -1,13 +1,12 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { environment } from '../../environments/environment';
-import { Role } from '../core/role';
 import { UserStatus } from '../core/user-status';
+import { accessTokenResponse, authUrl, loginResponse } from '../testing/auth-session';
+import { TEST_ACCESS_TOKEN, TEST_ACCOUNT, TEST_REFRESHED_TOKEN } from '../testing/test-accounts';
 import { TestUsers } from '../testing/test-users';
 import {
   AUTH_PATH,
-  Account,
   AuthService,
   LOGIN_PATH,
   LOGOUT_PATH,
@@ -17,25 +16,15 @@ import {
   RegisterResponse,
 } from './auth.service';
 
-const REGISTER_URL = `${environment.apiUrl}${AUTH_PATH}${REGISTER_PATH}`;
-const LOGIN_URL = `${environment.apiUrl}${AUTH_PATH}${LOGIN_PATH}`;
-const REFRESH_URL = `${environment.apiUrl}${AUTH_PATH}${REFRESH_PATH}`;
-const LOGOUT_URL = `${environment.apiUrl}${AUTH_PATH}${LOGOUT_PATH}`;
-const ME_URL = `${environment.apiUrl}${AUTH_PATH}${ME_PATH}`;
+const REGISTER_URL = authUrl(REGISTER_PATH);
+const LOGIN_URL = authUrl(LOGIN_PATH);
+const REFRESH_URL = authUrl(REFRESH_PATH);
+const LOGOUT_URL = authUrl(LOGOUT_PATH);
+const ME_URL = authUrl(ME_PATH);
 const POST_METHOD = 'POST';
-const USER_ID = 7;
-const ACCESS_TOKEN = 'access-token';
-const REFRESHED_TOKEN = 'refreshed-token';
-const EXPIRES_IN_SECONDS = 3600;
+const USER_ID = TEST_ACCOUNT.id;
 const SERVER_ERROR = { status: 500, statusText: 'Server Error' };
 const CREATED: RegisterResponse = { userId: USER_ID, status: UserStatus.PendingVerification };
-const ACCOUNT: Account = {
-  id: USER_ID,
-  email: TestUsers.email,
-  displayName: TestUsers.displayName,
-  role: Role.User,
-  status: UserStatus.Active,
-};
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -76,23 +65,21 @@ describe('AuthService', () => {
 
     const call = httpMock.expectOne(LOGIN_URL);
     expect(call.request.withCredentials).toBe(true);
-    call.flush({ accessToken: ACCESS_TOKEN, expiresInSeconds: EXPIRES_IN_SECONDS, user: ACCOUNT });
+    call.flush(loginResponse());
 
-    expect(service.accessToken()).toBe(ACCESS_TOKEN);
-    expect(service.currentUser()).toEqual(ACCOUNT);
+    expect(service.accessToken()).toBe(TEST_ACCESS_TOKEN);
+    expect(service.currentUser()).toEqual(TEST_ACCOUNT);
     expect(service.isAuthenticated()).toBe(true);
   });
 
   it('restores a session from the refresh cookie and then loads the account', () => {
     service.restoreSession().subscribe();
 
-    httpMock
-      .expectOne(REFRESH_URL)
-      .flush({ accessToken: REFRESHED_TOKEN, expiresInSeconds: EXPIRES_IN_SECONDS });
-    httpMock.expectOne(ME_URL).flush(ACCOUNT);
+    httpMock.expectOne(REFRESH_URL).flush(accessTokenResponse(TEST_REFRESHED_TOKEN));
+    httpMock.expectOne(ME_URL).flush(TEST_ACCOUNT);
 
-    expect(service.accessToken()).toBe(REFRESHED_TOKEN);
-    expect(service.currentUser()).toEqual(ACCOUNT);
+    expect(service.accessToken()).toBe(TEST_REFRESHED_TOKEN);
+    expect(service.currentUser()).toEqual(TEST_ACCOUNT);
   });
 
   it('drops the session on logout even when the call fails', () => {
@@ -108,8 +95,6 @@ describe('AuthService', () => {
 
   function givenSignedIn(): void {
     service.login({ email: TestUsers.email, password: TestUsers.password }).subscribe();
-    httpMock
-      .expectOne(LOGIN_URL)
-      .flush({ accessToken: ACCESS_TOKEN, expiresInSeconds: EXPIRES_IN_SECONDS, user: ACCOUNT });
+    httpMock.expectOne(LOGIN_URL).flush(loginResponse());
   }
 });

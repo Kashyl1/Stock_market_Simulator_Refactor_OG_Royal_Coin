@@ -1,26 +1,18 @@
 package com.tradingsimulator.backend.auth.service;
 
-import java.time.Clock;
-
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.tradingsimulator.backend.auth.AuthError;
-import com.tradingsimulator.backend.auth.AuthLinks;
-import com.tradingsimulator.backend.auth.AuthProperties;
+import com.tradingsimulator.backend.auth.AuthMailNotifier;
 import com.tradingsimulator.backend.auth.TokenType;
 import com.tradingsimulator.backend.auth.User;
 import com.tradingsimulator.backend.auth.UserRepository;
-import com.tradingsimulator.backend.auth.UserToken;
-import com.tradingsimulator.backend.auth.UserTokenRepository;
 import com.tradingsimulator.backend.auth.password.PasswordPolicy;
-import com.tradingsimulator.backend.auth.token.OneTimeToken;
 import com.tradingsimulator.backend.auth.token.OneTimeTokenService;
 import com.tradingsimulator.backend.common.error.AppException;
-import com.tradingsimulator.backend.mail.VerificationEmailRequested;
 import com.tradingsimulator.backend.wallet.Wallet;
 import com.tradingsimulator.backend.wallet.WalletRepository;
 
@@ -31,14 +23,11 @@ import lombok.RequiredArgsConstructor;
 public class RegistrationServiceImpl implements RegistrationService {
 
 	private final UserRepository users;
-	private final UserTokenRepository userTokens;
 	private final WalletRepository wallets;
 	private final PasswordPolicy passwordPolicy;
 	private final PasswordEncoder passwordEncoder;
 	private final OneTimeTokenService oneTimeTokens;
-	private final ApplicationEventPublisher events;
-	private final AuthProperties properties;
-	private final Clock clock;
+	private final AuthMailNotifier mailNotifier;
 
 	@Override
 	@Transactional
@@ -51,9 +40,8 @@ public class RegistrationServiceImpl implements RegistrationService {
 		User user = saveUser(email, password, displayName);
 		wallets.save(Wallet.empty(user.getId()));
 
-		OneTimeToken token = oneTimeTokens.issue();
-		userTokens.save(UserToken.oneTime(user.getId(), TokenType.VERIFY_EMAIL, token.hash(), clock.instant().plus(properties.verificationTokenTtl())));
-		events.publishEvent(new VerificationEmailRequested(user.getEmail(), AuthLinks.verifyEmail(properties.frontendBaseUrl(), token.raw())));
+		String rawToken = oneTimeTokens.issueFor(user.getId(), TokenType.VERIFY_EMAIL);
+		mailNotifier.sendVerificationLink(user.getEmail(), rawToken);
 
 		return new RegistrationResult(user.getId(), user.getStatus());
 	}

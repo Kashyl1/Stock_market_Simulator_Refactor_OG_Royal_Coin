@@ -2,31 +2,20 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { environment } from '../../../environments/environment';
 import { AppPath } from '../../core/app-routes';
 import { ErrorResponse } from '../../core/error-response';
-import { Role } from '../../core/role';
-import { UserStatus } from '../../core/user-status';
+import { authUrl, loginResponse } from '../../testing/auth-session';
 import { element, elements, submitForm, typeInto } from '../../testing/dom';
 import { TestUsers } from '../../testing/test-users';
-import { AUTH_PATH, Account, LOGIN_PATH } from '../auth.service';
+import { LOGIN_PATH } from '../auth.service';
 import { LoginPage } from './login-page';
 
-const LOGIN_URL = `${environment.apiUrl}${AUTH_PATH}${LOGIN_PATH}`;
+const LOGIN_URL = authUrl(LOGIN_PATH);
 const EMAIL_INPUT = '#email';
 const PASSWORD_INPUT = '#password';
 const FIELD_ERROR = '.field__error';
 const ERROR_NOTICE = '.notice--error';
 const UNAUTHORIZED = { status: 401, statusText: 'Unauthorized' };
-const ACCESS_TOKEN = 'access-token';
-const EXPIRES_IN_SECONDS = 3600;
-const ACCOUNT: Account = {
-  id: 7,
-  email: TestUsers.email,
-  displayName: TestUsers.displayName,
-  role: Role.User,
-  status: UserStatus.Active,
-};
 const WRONG_CREDENTIALS: ErrorResponse = {
   code: 'AUTH.INVALID_CREDENTIALS',
   message: 'the e-mail or the password is not correct',
@@ -69,7 +58,7 @@ describe('LoginPage', () => {
 
     const call = httpMock.expectOne(LOGIN_URL);
     expect(call.request.body).toEqual({ email: TestUsers.email, password: TestUsers.password });
-    call.flush({ accessToken: ACCESS_TOKEN, expiresInSeconds: EXPIRES_IN_SECONDS, user: ACCOUNT });
+    call.flush(loginResponse());
     TestBed.tick();
 
     expect(navigate).toHaveBeenCalledWith(AppPath.Dashboard);

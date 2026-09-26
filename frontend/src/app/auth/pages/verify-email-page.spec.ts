@@ -2,13 +2,13 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { environment } from '../../../environments/environment';
 import { ErrorResponse } from '../../core/error-response';
+import { authUrl } from '../../testing/auth-session';
 import { element } from '../../testing/dom';
-import { AUTH_PATH, VERIFY_EMAIL_PATH } from '../auth.service';
+import { VERIFY_EMAIL_PATH } from '../auth.service';
 import { MISSING_TOKEN_MESSAGE, VerifyEmailPage } from './verify-email-page';
 
-const VERIFY_URL = `${environment.apiUrl}${AUTH_PATH}${VERIFY_EMAIL_PATH}`;
+const VERIFY_URL = authUrl(VERIFY_EMAIL_PATH);
 const TOKEN_INPUT = 'token';
 const RAW_TOKEN = 'raw-token';
 const SUCCESS_NOTICE = '.notice--success';

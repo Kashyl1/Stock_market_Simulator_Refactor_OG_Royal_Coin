@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
-export const UNEXPECTED_FAILURE_MESSAGE = 'Something went wrong. Please try again in a moment.';
-export const OFFLINE_FAILURE_MESSAGE = 'The backend is not reachable. Start it and try again.';
+const UNEXPECTED_FAILURE_MESSAGE = 'Something went wrong. Please try again in a moment.';
+const OFFLINE_FAILURE_MESSAGE = 'The backend is not reachable. Start it and try again.';
 
 const NETWORK_FAILURE_STATUS = 0;
 

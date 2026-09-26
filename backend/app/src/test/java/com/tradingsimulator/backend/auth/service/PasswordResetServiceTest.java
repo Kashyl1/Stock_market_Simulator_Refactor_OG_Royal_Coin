@@ -8,66 +8,50 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.tradingsimulator.backend.auth.AuthError;
+import com.tradingsimulator.backend.auth.AuthMailNotifier;
 import com.tradingsimulator.backend.auth.TokenType;
 import com.tradingsimulator.backend.auth.User;
 import com.tradingsimulator.backend.auth.UserRepository;
 import com.tradingsimulator.backend.auth.UserStatus;
 import com.tradingsimulator.backend.auth.UserToken;
-import com.tradingsimulator.backend.auth.UserTokenRepository;
 import com.tradingsimulator.backend.auth.password.PasswordPolicy;
-import com.tradingsimulator.backend.auth.token.OneTimeToken;
 import com.tradingsimulator.backend.auth.token.OneTimeTokenService;
 import com.tradingsimulator.backend.common.error.AppException;
-import com.tradingsimulator.backend.mail.PasswordResetEmailRequested;
-import com.tradingsimulator.backend.support.TestAuthProperties;
 import com.tradingsimulator.backend.support.TestUsers;
 
 class PasswordResetServiceTest {
 
-	private static final Instant NOW = Instant.parse("2026-09-23T10:00:00Z");
 	private static final String RAW_TOKEN = "raw-token";
 	private static final String TOKEN_HASH = "token-hash";
 	private static final String NEW_PASSWORD = "brand-new-password";
 	private static final String NEW_PASSWORD_HASH = "brand-new-hash";
-	private static final String EXPECTED_LINK = TestAuthProperties.FRONTEND_BASE_URL + "/reset-password?token=" + RAW_TOKEN;
+	private static final Instant EXPIRES_AT = Instant.parse("2026-09-23T11:00:00Z");
 
 	private final UserRepository users = mock(UserRepository.class);
-	private final UserTokenRepository userTokens = mock(UserTokenRepository.class);
 	private final OneTimeTokenService oneTimeTokens = mock(OneTimeTokenService.class);
 	private final PasswordPolicy passwordPolicy = mock(PasswordPolicy.class);
 	private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
 	private final RefreshTokenService refreshTokens = mock(RefreshTokenService.class);
-	private final ApplicationEventPublisher events = mock(ApplicationEventPublisher.class);
+	private final AuthMailNotifier mailNotifier = mock(AuthMailNotifier.class);
 
-	private final PasswordResetService service = new PasswordResetServiceImpl(users, userTokens, oneTimeTokens,
-			passwordPolicy, passwordEncoder, refreshTokens, events, TestAuthProperties.create(), Clock.fixed(NOW, ZoneOffset.UTC));
+	private final PasswordResetService service = new PasswordResetServiceImpl(users, oneTimeTokens, passwordPolicy,
+			passwordEncoder, refreshTokens, mailNotifier);
 
 	@Test
-	void storesAResetTokenAndAsksForTheMail() {
+	void issuesAResetTokenAndAsksForTheMail() {
 		when(users.findByEmailIgnoreCase(TestUsers.EMAIL)).thenReturn(Optional.of(TestUsers.active()));
-		when(oneTimeTokens.issue()).thenReturn(new OneTimeToken(RAW_TOKEN, TOKEN_HASH));
+		when(oneTimeTokens.issueFor(TestUsers.USER_ID, TokenType.RESET_PASSWORD)).thenReturn(RAW_TOKEN);
 
 		service.requestReset(TestUsers.EMAIL);
 
-		ArgumentCaptor<UserToken> token = ArgumentCaptor.forClass(UserToken.class);
-		verify(userTokens).save(token.capture());
-		assertThat(token.getValue().getUserId()).isEqualTo(TestUsers.USER_ID);
-		assertThat(token.getValue().getTokenType()).isEqualTo(TokenType.RESET_PASSWORD);
-		assertThat(token.getValue().getTokenHash()).isEqualTo(TOKEN_HASH);
-		assertThat(token.getValue().getExpiresAt()).isEqualTo(NOW.plus(TestAuthProperties.RESET_TOKEN_TTL));
-
-		verify(events).publishEvent(new PasswordResetEmailRequested(TestUsers.EMAIL, EXPECTED_LINK));
+		verify(mailNotifier).sendPasswordResetLink(TestUsers.EMAIL, RAW_TOKEN);
 	}
 
 	@Test
@@ -76,7 +60,7 @@ class PasswordResetServiceTest {
 
 		service.requestReset(TestUsers.OTHER_EMAIL);
 
-		verifyNoInteractions(userTokens, oneTimeTokens, events);
+		verifyNoInteractions(oneTimeTokens, mailNotifier);
 	}
 
 	@Test
@@ -125,11 +109,13 @@ class PasswordResetServiceTest {
 	}
 
 	private void givenConsumableToken() {
-		when(consume()).thenReturn(UserToken.oneTime(TestUsers.USER_ID, TokenType.RESET_PASSWORD, TOKEN_HASH, NOW.plus(TestAuthProperties.RESET_TOKEN_TTL)));
+		when(consume()).thenReturn(UserToken.oneTime(TestUsers.USER_ID, TokenType.RESET_PASSWORD, TOKEN_HASH, EXPIRES_AT));
 	}
 
 	private void assertThatResetFailsWith(AuthError expected) {
-		assertThatThrownBy(() -> service.reset(RAW_TOKEN, NEW_PASSWORD)).isInstanceOf(AppException.class)
-				.extracting(thrown -> ((AppException) thrown).errorCode()).isEqualTo(expected);
+		assertThatThrownBy(() -> service.reset(RAW_TOKEN, NEW_PASSWORD))
+				.isInstanceOf(AppException.class)
+				.extracting(thrown -> ((AppException) thrown).errorCode())
+				.isEqualTo(expected);
 	}
 }

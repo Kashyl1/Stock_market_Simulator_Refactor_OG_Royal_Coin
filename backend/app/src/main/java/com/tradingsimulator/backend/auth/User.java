@@ -26,7 +26,7 @@ public class User extends UserJpa {
 		return user;
 	}
 
-	public static String normalizeEmail(String email) {
+	private static String normalizeEmail(String email) {
 		return email.trim().toLowerCase(Locale.ROOT);
 	}
 }

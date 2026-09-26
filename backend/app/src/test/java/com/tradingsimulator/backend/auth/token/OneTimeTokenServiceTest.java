@@ -3,6 +3,7 @@ package com.tradingsimulator.backend.auth.token;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.security.NoSuchAlgorithmException;
@@ -14,6 +15,7 @@ import java.time.ZoneOffset;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import com.tradingsimulator.backend.auth.AuthError;
 import com.tradingsimulator.backend.auth.TokenType;
@@ -21,6 +23,7 @@ import com.tradingsimulator.backend.auth.UserToken;
 import com.tradingsimulator.backend.auth.UserTokenRepository;
 import com.tradingsimulator.backend.common.error.AppException;
 import com.tradingsimulator.backend.common.error.ErrorCode;
+import com.tradingsimulator.backend.support.TestAuthProperties;
 import com.tradingsimulator.backend.support.TestUsers;
 
 class OneTimeTokenServiceTest {
@@ -61,6 +64,27 @@ class OneTimeTokenServiceTest {
 	@Test
 	void takesItsRandomnessFromTheInjectedSource() {
 		assertThat(newService().issue()).isEqualTo(newService().issue());
+	}
+
+	@Test
+	void storesAnIssuedTokenWithTheLifetimeOfItsType() {
+		String raw = service.issueFor(TestUsers.USER_ID, TokenType.RESET_PASSWORD);
+
+		ArgumentCaptor<UserToken> saved = ArgumentCaptor.forClass(UserToken.class);
+		verify(userTokens).save(saved.capture());
+		assertThat(saved.getValue().getUserId()).isEqualTo(TestUsers.USER_ID);
+		assertThat(saved.getValue().getTokenType()).isEqualTo(TokenType.RESET_PASSWORD);
+		assertThat(saved.getValue().getTokenHash()).isEqualTo(service.hash(raw));
+		assertThat(saved.getValue().getExpiresAt()).isEqualTo(NOW.plus(TestAuthProperties.RESET_TOKEN_TTL));
+	}
+
+	@Test
+	void givesAVerificationTokenItsOwnLifetime() {
+		service.issueFor(TestUsers.USER_ID, TokenType.VERIFY_EMAIL);
+
+		ArgumentCaptor<UserToken> saved = ArgumentCaptor.forClass(UserToken.class);
+		verify(userTokens).save(saved.capture());
+		assertThat(saved.getValue().getExpiresAt()).isEqualTo(NOW.plus(TestAuthProperties.VERIFICATION_TOKEN_TTL));
 	}
 
 	@Test
@@ -106,7 +130,7 @@ class OneTimeTokenServiceTest {
 	}
 
 	private OneTimeTokenService newService() {
-		return new OneTimeTokenServiceImpl(seededRandom(), userTokens, Clock.fixed(NOW, ZoneOffset.UTC));
+		return new OneTimeTokenServiceImpl(seededRandom(), userTokens, TestAuthProperties.create(), Clock.fixed(NOW, ZoneOffset.UTC));
 	}
 
 	private static SecureRandom seededRandom() {
