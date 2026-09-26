@@ -11,59 +11,45 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.tradingsimulator.backend.auth.AuthError;
+import com.tradingsimulator.backend.auth.AuthMailNotifier;
 import com.tradingsimulator.backend.auth.Role;
 import com.tradingsimulator.backend.auth.TokenType;
 import com.tradingsimulator.backend.auth.User;
 import com.tradingsimulator.backend.auth.UserRepository;
 import com.tradingsimulator.backend.auth.UserStatus;
-import com.tradingsimulator.backend.auth.UserToken;
-import com.tradingsimulator.backend.auth.UserTokenRepository;
 import com.tradingsimulator.backend.auth.password.PasswordPolicy;
-import com.tradingsimulator.backend.auth.token.OneTimeToken;
 import com.tradingsimulator.backend.auth.token.OneTimeTokenService;
 import com.tradingsimulator.backend.common.error.AppException;
-import com.tradingsimulator.backend.mail.VerificationEmailRequested;
-import com.tradingsimulator.backend.support.TestAuthProperties;
 import com.tradingsimulator.backend.support.TestEntities;
 import com.tradingsimulator.backend.support.TestUsers;
 import com.tradingsimulator.backend.wallet.Wallet;
-import com.tradingsimulator.backend.wallet.WalletJpa;
 import com.tradingsimulator.backend.wallet.WalletRepository;
 
 class RegistrationServiceTest {
 
 	private static final String RAW_TOKEN = "raw-token";
-	private static final String TOKEN_HASH = "token-hash";
-	private static final Instant NOW = Instant.parse("2026-09-12T10:00:00Z");
-	private static final String EXPECTED_LINK = TestAuthProperties.FRONTEND_BASE_URL + "/verify-email?token=" + RAW_TOKEN;
 
 	private final UserRepository users = mock(UserRepository.class);
-	private final UserTokenRepository userTokens = mock(UserTokenRepository.class);
 	private final WalletRepository wallets = mock(WalletRepository.class);
 	private final PasswordPolicy passwordPolicy = mock(PasswordPolicy.class);
 	private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
 	private final OneTimeTokenService oneTimeTokens = mock(OneTimeTokenService.class);
-	private final ApplicationEventPublisher events = mock(ApplicationEventPublisher.class);
+	private final AuthMailNotifier mailNotifier = mock(AuthMailNotifier.class);
 
-	private final RegistrationService service = new RegistrationServiceImpl(users, userTokens, wallets,
-			passwordPolicy, passwordEncoder, oneTimeTokens, events, TestAuthProperties.create(), Clock.fixed(NOW, ZoneOffset.UTC));
+	private final RegistrationService service = new RegistrationServiceImpl(users, wallets, passwordPolicy, passwordEncoder, oneTimeTokens, mailNotifier);
 
 	@BeforeEach
 	void stubCollaborators() {
 		when(passwordEncoder.encode(TestUsers.PASSWORD)).thenReturn(TestUsers.PASSWORD_HASH);
-		when(oneTimeTokens.issue()).thenReturn(new OneTimeToken(RAW_TOKEN, TOKEN_HASH));
+		when(oneTimeTokens.issueFor(TestUsers.USER_ID, TokenType.VERIFY_EMAIL)).thenReturn(RAW_TOKEN);
 		when(users.saveAndFlush(any(User.class))).thenAnswer(invocation -> TestEntities.withId(invocation.getArgument(0), TestUsers.USER_ID));
 	}
 
@@ -84,18 +70,11 @@ class RegistrationServiceTest {
 		ArgumentCaptor<Wallet> wallet = ArgumentCaptor.forClass(Wallet.class);
 		verify(wallets).save(wallet.capture());
 		assertThat(wallet.getValue().getUserId()).isEqualTo(TestUsers.USER_ID);
-		assertThat(wallet.getValue().getCurrency()).isEqualTo(WalletJpa.DEFAULT_CURRENCY);
+		assertThat(wallet.getValue().getCurrency()).isEqualTo(Wallet.DEFAULT_CURRENCY);
 		assertThat(wallet.getValue().getCashBalance()).isEqualByComparingTo(BigDecimal.ZERO);
 		assertThat(wallet.getValue().getReservedBalance()).isEqualByComparingTo(BigDecimal.ZERO);
 
-		ArgumentCaptor<UserToken> token = ArgumentCaptor.forClass(UserToken.class);
-		verify(userTokens).save(token.capture());
-		assertThat(token.getValue().getUserId()).isEqualTo(TestUsers.USER_ID);
-		assertThat(token.getValue().getTokenType()).isEqualTo(TokenType.VERIFY_EMAIL);
-		assertThat(token.getValue().getTokenHash()).isEqualTo(TOKEN_HASH);
-		assertThat(token.getValue().getExpiresAt()).isEqualTo(NOW.plus(TestAuthProperties.VERIFICATION_TOKEN_TTL));
-
-		verify(events).publishEvent(new VerificationEmailRequested(TestUsers.EMAIL, EXPECTED_LINK));
+		verify(mailNotifier).sendVerificationLink(TestUsers.EMAIL, RAW_TOKEN);
 	}
 
 	@Test
@@ -105,7 +84,7 @@ class RegistrationServiceTest {
 		ArgumentCaptor<User> user = ArgumentCaptor.forClass(User.class);
 		verify(users).saveAndFlush(user.capture());
 		assertThat(user.getValue().getEmail()).isEqualTo(TestUsers.EMAIL);
-		verify(events).publishEvent(new VerificationEmailRequested(TestUsers.EMAIL, EXPECTED_LINK));
+		verify(mailNotifier).sendVerificationLink(TestUsers.EMAIL, RAW_TOKEN);
 	}
 
 	@Test
@@ -114,7 +93,7 @@ class RegistrationServiceTest {
 
 		assertThatRegisterFailsWith(AuthError.PASSWORD_TOO_WEAK);
 
-		verifyNoInteractions(users, wallets, userTokens, events);
+		verifyNoInteractions(users, wallets, oneTimeTokens, mailNotifier);
 	}
 
 	@Test
@@ -124,7 +103,7 @@ class RegistrationServiceTest {
 		assertThatRegisterFailsWith(AuthError.EMAIL_ALREADY_REGISTERED);
 
 		verify(users, never()).saveAndFlush(any(User.class));
-		verifyNoInteractions(wallets, userTokens, events);
+		verifyNoInteractions(wallets, oneTimeTokens, mailNotifier);
 	}
 
 	@Test
@@ -133,7 +112,7 @@ class RegistrationServiceTest {
 
 		assertThatRegisterFailsWith(AuthError.EMAIL_ALREADY_REGISTERED);
 
-		verifyNoInteractions(wallets, userTokens, events);
+		verifyNoInteractions(wallets, oneTimeTokens, mailNotifier);
 	}
 
 	private RegistrationResult register(String email) {
@@ -141,7 +120,9 @@ class RegistrationServiceTest {
 	}
 
 	private void assertThatRegisterFailsWith(AuthError expected) {
-		assertThatThrownBy(() -> register(TestUsers.EMAIL)).isInstanceOf(AppException.class).extracting(thrown -> ((AppException) thrown).errorCode())
+		assertThatThrownBy(() -> register(TestUsers.EMAIL))
+				.isInstanceOf(AppException.class)
+				.extracting(thrown -> ((AppException) thrown).errorCode())
 				.isEqualTo(expected);
 	}
 }

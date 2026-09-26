@@ -45,13 +45,13 @@ export interface Account {
   readonly status: UserStatus;
 }
 
-export interface LoginResponse {
+interface LoginResponse {
   readonly accessToken: string;
   readonly expiresInSeconds: number;
   readonly user: Account;
 }
 
-export interface AccessTokenResponse {
+interface AccessTokenResponse {
   readonly accessToken: string;
   readonly expiresInSeconds: number;
 }

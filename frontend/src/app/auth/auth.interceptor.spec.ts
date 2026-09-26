@@ -1,31 +1,19 @@
-  import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { AppPath } from '../core/app-routes';
-import { Role } from '../core/role';
-import { UserStatus } from '../core/user-status';
-import { TestUsers } from '../testing/test-users';
+import { accessTokenResponse, authUrl, signIn } from '../testing/auth-session';
+import { TEST_ACCESS_TOKEN, TEST_REFRESHED_TOKEN } from '../testing/test-accounts';
 import { authInterceptor } from './auth.interceptor';
-import { AUTH_PATH, Account, AuthService, LOGIN_PATH, REFRESH_PATH } from './auth.service';
+import { AuthService, REFRESH_PATH } from './auth.service';
 
 const PROTECTED_URL = `${environment.apiUrl}/portfolios`;
-const LOGIN_URL = `${environment.apiUrl}${AUTH_PATH}${LOGIN_PATH}`;
-const REFRESH_URL = `${environment.apiUrl}${AUTH_PATH}${REFRESH_PATH}`;
+const REFRESH_URL = authUrl(REFRESH_PATH);
 const AUTHORIZATION_HEADER = 'Authorization';
-const ACCESS_TOKEN = 'access-token';
-const REFRESHED_TOKEN = 'refreshed-token';
-const EXPIRES_IN_SECONDS = 3600;
 const UNAUTHORIZED = { status: 401, statusText: 'Unauthorized' };
 const PAYLOAD = { ok: true };
-const ACCOUNT: Account = {
-  id: 7,
-  email: TestUsers.email,
-  displayName: TestUsers.displayName,
-  role: Role.User,
-  status: UserStatus.Active,
-};
 
 describe('authInterceptor', () => {
   let http: HttpClient;
@@ -45,7 +33,7 @@ describe('authInterceptor', () => {
     httpMock = TestBed.inject(HttpTestingController);
     auth = TestBed.inject(AuthService);
     router = TestBed.inject(Router);
-    signIn();
+    signIn(httpMock);
   });
 
   afterEach(() => httpMock.verify());
@@ -54,7 +42,7 @@ describe('authInterceptor', () => {
     http.get(PROTECTED_URL).subscribe();
 
     const call = httpMock.expectOne(PROTECTED_URL);
-    expect(call.request.headers.get(AUTHORIZATION_HEADER)).toBe(`Bearer ${ACCESS_TOKEN}`);
+    expect(call.request.headers.get(AUTHORIZATION_HEADER)).toBe(`Bearer ${TEST_ACCESS_TOKEN}`);
     call.flush(PAYLOAD);
   });
 
@@ -63,16 +51,14 @@ describe('authInterceptor', () => {
     http.get(PROTECTED_URL).subscribe((result) => (body = result));
 
     httpMock.expectOne(PROTECTED_URL).flush(null, UNAUTHORIZED);
-    httpMock
-      .expectOne(REFRESH_URL)
-      .flush({ accessToken: REFRESHED_TOKEN, expiresInSeconds: EXPIRES_IN_SECONDS });
+    httpMock.expectOne(REFRESH_URL).flush(accessTokenResponse(TEST_REFRESHED_TOKEN));
 
     const retry = httpMock.expectOne(PROTECTED_URL);
-    expect(retry.request.headers.get(AUTHORIZATION_HEADER)).toBe(`Bearer ${REFRESHED_TOKEN}`);
+    expect(retry.request.headers.get(AUTHORIZATION_HEADER)).toBe(`Bearer ${TEST_REFRESHED_TOKEN}`);
     retry.flush(PAYLOAD);
 
     expect(body).toEqual(PAYLOAD);
-    expect(auth.accessToken()).toBe(REFRESHED_TOKEN);
+    expect(auth.accessToken()).toBe(TEST_REFRESHED_TOKEN);
   });
 
   it('ends the session and sends the person to the login page when the refresh fails', () => {
@@ -85,11 +71,4 @@ describe('authInterceptor', () => {
     expect(auth.isAuthenticated()).toBe(false);
     expect(navigate).toHaveBeenCalledWith([AppPath.Login]);
   });
-
-  function signIn(): void {
-    auth.login({ email: TestUsers.email, password: TestUsers.password }).subscribe();
-    httpMock
-      .expectOne(LOGIN_URL)
-      .flush({ accessToken: ACCESS_TOKEN, expiresInSeconds: EXPIRES_IN_SECONDS, user: ACCOUNT });
-  }
 });

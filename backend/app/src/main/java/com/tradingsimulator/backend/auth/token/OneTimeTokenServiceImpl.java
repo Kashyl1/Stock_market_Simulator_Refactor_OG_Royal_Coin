@@ -5,11 +5,13 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 
 import org.springframework.stereotype.Service;
 
+import com.tradingsimulator.backend.auth.AuthProperties;
 import com.tradingsimulator.backend.auth.TokenType;
 import com.tradingsimulator.backend.auth.UserToken;
 import com.tradingsimulator.backend.auth.UserTokenRepository;
@@ -27,6 +29,7 @@ public class OneTimeTokenServiceImpl implements OneTimeTokenService {
 
 	private final SecureRandom secureRandom;
 	private final UserTokenRepository userTokens;
+	private final AuthProperties properties;
 	private final Clock clock;
 
 	@Override
@@ -43,6 +46,13 @@ public class OneTimeTokenServiceImpl implements OneTimeTokenService {
 	}
 
 	@Override
+	public String issueFor(Long userId, TokenType tokenType) {
+		OneTimeToken token = issue();
+		userTokens.save(UserToken.oneTime(userId, tokenType, token.hash(), clock.instant().plus(ttlOf(tokenType))));
+		return token.raw();
+	}
+
+	@Override
 	public UserToken consume(String rawToken, TokenType tokenType, ErrorCode invalid, ErrorCode expired) {
 		UserToken token = userTokens.findByTokenHashAndTokenType(hash(rawToken), tokenType).orElseThrow(() -> new AppException(invalid));
 		if (token.getConsumedAt() != null) {
@@ -56,6 +66,13 @@ public class OneTimeTokenServiceImpl implements OneTimeTokenService {
 
 		token.setConsumedAt(now);
 		return token;
+	}
+
+	private Duration ttlOf(TokenType tokenType) {
+		return switch (tokenType) {
+			case VERIFY_EMAIL -> properties.verificationTokenTtl();
+			case RESET_PASSWORD -> properties.resetTokenTtl();
+		};
 	}
 
 	private static String encode(byte[] bytes) {
