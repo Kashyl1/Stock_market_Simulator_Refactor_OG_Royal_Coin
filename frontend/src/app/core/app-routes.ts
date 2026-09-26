@@ -3,6 +3,8 @@ export const AppRoute = {
   Register: 'register',
   Login: 'login',
   VerifyEmail: 'verify-email',
+  ForgotPassword: 'forgot-password',
+  ResetPassword: 'reset-password',
   Dashboard: 'dashboard',
 } as const;
 
@@ -13,5 +15,7 @@ export const AppPath = {
   Register: `/${AppRoute.Register}`,
   Login: `/${AppRoute.Login}`,
   VerifyEmail: `/${AppRoute.VerifyEmail}`,
+  ForgotPassword: `/${AppRoute.ForgotPassword}`,
+  ResetPassword: `/${AppRoute.ResetPassword}`,
   Dashboard: `/${AppRoute.Dashboard}`,
 } as const;

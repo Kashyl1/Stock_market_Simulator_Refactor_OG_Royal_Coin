@@ -1,56 +1,48 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { APP_ACCOUNT_NOTICE } from '../../core/app-info';
 import { AppPath } from '../../core/app-routes';
 import { Failure, toFailure } from '../../core/error-response';
-import { UserStatus } from '../../core/user-status';
-import {
-  DISPLAY_NAME_MAX_LENGTH,
-  EMAIL_MAX_LENGTH,
-  PASSWORD_MAX_LENGTH,
-  PASSWORD_MIN_LENGTH,
-} from '../auth-rules';
-import { AuthService, RegisterResponse } from '../auth.service';
-import { PASSWORDS_MISMATCH, passwordsMatch } from '../passwords-match';
 import {
   PasswordFieldType,
   PasswordVisibilityToggle,
 } from '../../shared/password-visibility-toggle';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../auth-rules';
+import { AuthService } from '../auth.service';
+import { PASSWORDS_MISMATCH, passwordsMatch } from '../passwords-match';
 
-const RegisterField = {
-  Email: 'email',
-  DisplayName: 'displayName',
-  Password: 'password',
+export const MISSING_TOKEN_MESSAGE =
+  'This link has no token. Ask for a new reset link and open the one from the e-mail.';
+
+const ResetField = {
+  NewPassword: 'newPassword',
   ConfirmPassword: 'confirmPassword',
 } as const;
 
 @Component({
-  selector: 'app-register-page',
+  selector: 'app-reset-password-page',
   imports: [ReactiveFormsModule, RouterLink, PasswordVisibilityToggle],
-  templateUrl: './register-page.html',
-  styleUrl: './register-page.scss',
+  templateUrl: './reset-password-page.html',
+  styleUrl: './reset-password-page.scss',
 })
-export class RegisterPage {
+export class ResetPasswordPage {
   private readonly auth = inject(AuthService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
 
+  readonly token = input<string>();
+
   protected readonly paths = AppPath;
-  protected readonly accountNotice = APP_ACCOUNT_NOTICE;
-  protected readonly emailMaxLength = EMAIL_MAX_LENGTH;
-  protected readonly displayNameMaxLength = DISPLAY_NAME_MAX_LENGTH;
   protected readonly passwordMinLength = PASSWORD_MIN_LENGTH;
   protected readonly passwordMaxLength = PASSWORD_MAX_LENGTH;
   protected readonly mismatchError = PASSWORDS_MISMATCH;
+  protected readonly missingTokenMessage = MISSING_TOKEN_MESSAGE;
 
   protected readonly form = this.formBuilder.nonNullable.group(
     {
-      email: ['', [Validators.required, Validators.email, Validators.maxLength(EMAIL_MAX_LENGTH)]],
-      displayName: ['', [Validators.required, Validators.maxLength(DISPLAY_NAME_MAX_LENGTH)]],
-      password: [
+      newPassword: [
         '',
         [
           Validators.required,
@@ -60,32 +52,26 @@ export class RegisterPage {
       ],
       confirmPassword: ['', [Validators.required]],
     },
-    { validators: passwordsMatch(RegisterField.Password, RegisterField.ConfirmPassword) },
+    { validators: passwordsMatch(ResetField.NewPassword, ResetField.ConfirmPassword) },
   );
 
   protected readonly submitting = signal(false);
-  protected readonly created = signal<RegisterResponse | null>(null);
+  protected readonly changed = signal(false);
   protected readonly failure = signal<Failure | null>(null);
   protected readonly passwordsVisible = signal(false);
 
+  protected readonly linkIsUsable = computed(() => Boolean(this.token()));
   protected readonly passwordFieldType = computed(() =>
     this.passwordsVisible() ? PasswordFieldType.Visible : PasswordFieldType.Hidden,
   );
-  protected readonly awaitingVerification = computed(
-    () => this.created()?.status === UserStatus.PendingVerification,
-  );
-  protected readonly emailFailure = computed(() => this.failureFor(RegisterField.Email));
-  protected readonly displayNameFailure = computed(() =>
-    this.failureFor(RegisterField.DisplayName),
-  );
-  protected readonly passwordFailure = computed(() => this.failureFor(RegisterField.Password));
 
   protected togglePasswordVisibility(): void {
     this.passwordsVisible.update((visible) => !visible);
   }
 
   protected submit(): void {
-    if (this.submitting()) {
+    const token = this.token();
+    if (this.submitting() || !token) {
       return;
     }
     if (this.form.invalid) {
@@ -95,27 +81,19 @@ export class RegisterPage {
 
     this.submitting.set(true);
     this.failure.set(null);
-    this.created.set(null);
-
-    const { email, displayName, password } = this.form.getRawValue();
 
     this.auth
-      .register({ email, displayName, password })
+      .resetPassword(token, this.form.controls.newPassword.value)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (response) => {
-          this.created.set(response);
+        next: () => {
+          this.changed.set(true);
           this.submitting.set(false);
-          this.form.reset();
         },
         error: (error: HttpErrorResponse) => {
           this.failure.set(toFailure(error));
           this.submitting.set(false);
         },
       });
-  }
-
-  private failureFor(field: string): string | null {
-    return this.failure()?.fieldErrors[field] ?? null;
   }
 }
