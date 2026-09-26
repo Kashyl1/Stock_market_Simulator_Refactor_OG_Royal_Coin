@@ -1,3 +1,11 @@
 package com.tradingsimulator.backend.auth.web.dto;
 
-public record AccessTokenResponse(String accessToken, long expiresInSeconds) { }
+import com.tradingsimulator.backend.common.Masking;
+
+public record AccessTokenResponse(String accessToken, long expiresInSeconds) {
+
+	@Override
+	public String toString() {
+		return "AccessTokenResponse[accessToken=" + Masking.MASK + ", expiresInSeconds=" + expiresInSeconds + "]";
+	}
+}
