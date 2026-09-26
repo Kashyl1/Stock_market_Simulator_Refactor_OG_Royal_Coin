@@ -1,5 +1,12 @@
 import { Component, computed, input, output } from '@angular/core';
 
+export const PasswordFieldType = {
+  Hidden: 'password',
+  Visible: 'text',
+} as const;
+
+export type PasswordFieldType = (typeof PasswordFieldType)[keyof typeof PasswordFieldType];
+
 const ToggleLabel = {
   Show: 'Show password',
   Hide: 'Hide password',

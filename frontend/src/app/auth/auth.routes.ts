@@ -18,4 +18,14 @@ export const routes: Routes = [
     title: pageTitle('Verify your e-mail'),
     loadComponent: () => import('./pages/verify-email-page').then((m) => m.VerifyEmailPage),
   },
+  {
+    path: AppRoute.ForgotPassword,
+    title: pageTitle('Reset your password'),
+    loadComponent: () => import('./pages/forgot-password-page').then((m) => m.ForgotPasswordPage),
+  },
+  {
+    path: AppRoute.ResetPassword,
+    title: pageTitle('Set a new password'),
+    loadComponent: () => import('./pages/reset-password-page').then((m) => m.ResetPasswordPage),
+  },
 ];

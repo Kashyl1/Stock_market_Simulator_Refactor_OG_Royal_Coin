@@ -11,6 +11,8 @@ export const VERIFY_EMAIL_PATH = '/verify-email';
 export const LOGIN_PATH = '/login';
 export const REFRESH_PATH = '/refresh';
 export const LOGOUT_PATH = '/logout';
+export const FORGOT_PASSWORD_PATH = '/forgot-password';
+export const RESET_PASSWORD_PATH = '/reset-password';
 export const ME_PATH = '/me';
 
 export const PUBLIC_AUTH_PATHS: readonly string[] = [
@@ -19,6 +21,8 @@ export const PUBLIC_AUTH_PATHS: readonly string[] = [
   LOGIN_PATH,
   REFRESH_PATH,
   LOGOUT_PATH,
+  FORGOT_PASSWORD_PATH,
+  RESET_PASSWORD_PATH,
 ];
 
 export interface RegisterRequest {
@@ -84,6 +88,14 @@ export class AuthService {
         map((response) => response.user),
         tap((account) => this.account.set(account)),
       );
+  }
+
+  requestPasswordReset(email: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}${FORGOT_PASSWORD_PATH}`, { email });
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}${RESET_PASSWORD_PATH}`, { token, newPassword });
   }
 
   refreshAccessToken(): Observable<string> {
