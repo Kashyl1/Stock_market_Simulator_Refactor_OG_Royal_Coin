@@ -1,15 +1,19 @@
 package com.tradingsimulator.backend.common.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -20,6 +24,8 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 import com.tradingsimulator.backend.auth.User;
 import com.tradingsimulator.backend.auth.UserRepository;
 import com.tradingsimulator.backend.auth.UserStatus;
+import com.tradingsimulator.backend.currency.Currency;
+import com.tradingsimulator.backend.currency.CurrencyRepository;
 import com.tradingsimulator.backend.support.TestJwtKeys;
 import com.tradingsimulator.backend.support.TestUsers;
 import com.tradingsimulator.backend.wallet.Wallet;
@@ -50,6 +56,13 @@ class SchemaIntegrationTest {
 	private static final String UPDATED_PENDING_USER = "UPDATE:" + UserStatus.PENDING_VERIFICATION.name();
 	private static final String UPDATED_AT_START = "UPDATE:START";
 	private static final String DELETED_AT_START = "DELETE:START";
+	private static final int SEEDED_CURRENCIES = 30;
+	private static final String POLISH_ZLOTY = "PLN";
+	private static final String JAPANESE_YEN = "JPY";
+	private static final int ZLOTY_MINOR_UNITS = 2;
+	private static final int YEN_MINOR_UNITS = 0;
+	private static final String UNKNOWN_CURRENCY = "XYZ";
+	private static final String WALLET_OWNER_EMAIL = "wallet.troodon@example.com";
 
 	@Container
 	@ServiceConnection
@@ -60,6 +73,9 @@ class SchemaIntegrationTest {
 
 	@Autowired
 	private WalletRepository wallets;
+
+	@Autowired
+	private CurrencyRepository currencies;
 
 	@Autowired
 	private JdbcTemplate jdbc;
@@ -115,5 +131,21 @@ class SchemaIntegrationTest {
 		jdbc.update(DELETE_PROCESS, DELETED_PROCESS);
 
 		assertThat(jdbc.queryForList(PROCESS_HISTORY_QUERY, String.class, DELETED_PROCESS)).containsExactly(DELETED_AT_START);
+	}
+
+	@Test
+	void theCurrencyDictionaryIsSeededWithItsMinorUnits() {
+		Map<String, Integer> minorUnits = currencies.findAll().stream().collect(Collectors.toMap(Currency::getCode, Currency::getMinorUnits));
+
+		assertThat(minorUnits).hasSize(SEEDED_CURRENCIES).containsEntry(POLISH_ZLOTY, ZLOTY_MINOR_UNITS).containsEntry(JAPANESE_YEN, YEN_MINOR_UNITS);
+	}
+
+	@Test
+	void aWalletInAnUnknownCurrencyIsRejected() {
+		User owner = users.save(User.pending(WALLET_OWNER_EMAIL, TestUsers.PASSWORD_HASH, TestUsers.DISPLAY_NAME));
+		Wallet wallet = Wallet.empty(owner.getId());
+		wallet.setCurrency(UNKNOWN_CURRENCY);
+
+		assertThatThrownBy(() -> wallets.saveAndFlush(wallet)).isInstanceOf(DataIntegrityViolationException.class);
 	}
 }
