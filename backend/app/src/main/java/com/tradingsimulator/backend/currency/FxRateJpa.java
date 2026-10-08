@@ -17,8 +17,9 @@ import lombok.Setter;
 @Setter
 public class FxRateJpa extends AbstractEntity {
 
+	public static final int RATE_SCALE = 18;
+
 	private static final int RATE_PRECISION = 38;
-	private static final int RATE_SCALE = 18;
 	private static final int SOURCE_MAX_LENGTH = 30;
 
 	@Column(name = "base_currency", nullable = false, length = CurrencyJpa.CODE_LENGTH)

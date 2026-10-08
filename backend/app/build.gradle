@@ -12,6 +12,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-json'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+	implementation 'org.springframework.boot:spring-boot-starter-restclient'
 
 	implementation 'org.springframework.boot:spring-boot-flyway'
 	implementation 'org.flywaydb:flyway-database-postgresql'
@@ -30,6 +31,6 @@ springBoot {
 	mainClass = 'com.tradingsimulator.backend.TradingSimulatorApplication'
 }
 
-tasks.named('bootRun') {
+tasks.named('bootRun', org.springframework.boot.gradle.tasks.run.BootRun) {
 	args '--spring.profiles.active=dev'
 }
