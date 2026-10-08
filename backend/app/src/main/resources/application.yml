@@ -51,3 +51,15 @@ app:
     verification-token-ttl: 24h
     reset-token-ttl: 1h
     frontend-base-url: ${APP_AUTH_FRONTEND_BASE_URL:http://localhost:4200}
+  batch:
+    enabled: ${APP_BATCH_ENABLED:true}
+    poll-interval: 15s
+    shutdown-timeout: 30s
+  fx:
+    zone: Europe/Warsaw
+    initial-history: 365d
+    nbp:
+      base-url: https://api.nbp.pl/api
+      days-per-request: 93
+      connect-timeout: 5s
+      read-timeout: 10s
