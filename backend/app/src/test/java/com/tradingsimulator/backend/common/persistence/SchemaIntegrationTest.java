@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -42,12 +43,14 @@ import com.tradingsimulator.backend.currency.FxRate;
 import com.tradingsimulator.backend.currency.FxRateRepository;
 import com.tradingsimulator.backend.support.TestFx;
 import com.tradingsimulator.backend.support.TestJwtKeys;
+import com.tradingsimulator.backend.support.TestTags;
 import com.tradingsimulator.backend.support.TestUsers;
 import com.tradingsimulator.backend.wallet.Wallet;
 import com.tradingsimulator.backend.wallet.WalletRepository;
 
 @SpringBootTest(properties = { SchemaIntegrationTest.FLYWAY_ENABLED, SchemaIntegrationTest.HIBERNATE_VALIDATE, SchemaIntegrationTest.BATCH_ENGINE_OFF })
-@Testcontainers(disabledWithoutDocker = true)
+@Tag(TestTags.INTEGRATION)
+@Testcontainers
 class SchemaIntegrationTest {
 
 	static final String FLYWAY_ENABLED = "spring.flyway.enabled=true";
