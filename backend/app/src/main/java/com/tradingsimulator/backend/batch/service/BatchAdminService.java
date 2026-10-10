@@ -9,6 +9,8 @@ import com.tradingsimulator.backend.web.PageResponse;
 
 public interface BatchAdminService {
 
+	BatchEngineView engine();
+
 	List<BatchTypeView> types();
 
 	PageResponse<BatchJobView> jobs(BatchJobFilter filter, int page, int size);

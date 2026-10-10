@@ -44,6 +44,9 @@ class BatchAdminServiceImplTest {
 	private static final long JOB_ID = 5L;
 	private static final int SUCCEEDED_SO_FAR = 5;
 	private static final int FAILED_SO_FAR = 1;
+	private static final Instant ONE_AT_NIGHT = Instant.parse("2026-10-09T01:00:00Z");
+	private static final long NOTHING_RUNNING = 0;
+	private static final long ONE_RUNNING = 1;
 
 	private final BatchTypeRepository types = mock(BatchTypeRepository.class);
 	private final BatchJobRepository jobs = mock(BatchJobRepository.class);
@@ -51,13 +54,36 @@ class BatchAdminServiceImplTest {
 	private final BatchPlanner planner = mock(BatchPlanner.class);
 	private final RunningBatchJobs running = new RunningBatchJobs();
 	private final AuditorAware<String> auditorAware = () -> Optional.of(ADMIN);
-	private final BatchAdminService service = new BatchAdminServiceImpl(types, jobs, items, planner, running, auditorAware, Clock.fixed(NOW, ZoneOffset.UTC));
+	private final BatchAdminService service = serviceAt(NOW);
 
 	@BeforeEach
 	void stubTypes() {
 		when(types.findByCode(BatchTypeCode.FX_RATES_NBP)).thenReturn(Optional.of(TestBatch.hourlyType()));
 		when(types.findAll()).thenReturn(List.of(TestBatch.hourlyType()));
 		when(jobs.save(any(BatchJob.class))).thenAnswer(invocation -> invocation.getArgument(0));
+	}
+
+	@Test
+	void theEngineIsReadyForADeployOnlyWhenQuietAndIdle() {
+		when(jobs.countByStatus(BatchJobStatus.RUNNING)).thenReturn(NOTHING_RUNNING);
+
+		BatchEngineView atNight = serviceAt(ONE_AT_NIGHT).engine();
+
+		assertThat(atNight.quiet()).isTrue();
+		assertThat(atNight.quietFrom()).isEqualTo(TestBatch.QUIET_FROM);
+		assertThat(atNight.quietUntil()).isEqualTo(TestBatch.QUIET_UNTIL);
+		assertThat(atNight.readyForDeploy()).isTrue();
+		assertThat(service.engine().readyForDeploy()).isFalse();
+	}
+
+	@Test
+	void aRunningJobHoldsTheDeployBack() {
+		when(jobs.countByStatus(BatchJobStatus.RUNNING)).thenReturn(ONE_RUNNING);
+
+		BatchEngineView atNight = serviceAt(ONE_AT_NIGHT).engine();
+
+		assertThat(atNight.runningJobs()).isEqualTo(ONE_RUNNING);
+		assertThat(atNight.readyForDeploy()).isFalse();
 	}
 
 	@Test
@@ -155,6 +181,10 @@ class BatchAdminServiceImplTest {
 		when(jobs.findById(JOB_ID)).thenReturn(Optional.empty());
 
 		assertFailsWith(() -> service.job(JOB_ID), BatchError.JOB_NOT_FOUND);
+	}
+
+	private BatchAdminService serviceAt(Instant now) {
+		return new BatchAdminServiceImpl(types, jobs, items, planner, running, auditorAware, TestBatch.properties(), Clock.fixed(now, ZoneOffset.UTC));
 	}
 
 	private BatchJob failedJob() {

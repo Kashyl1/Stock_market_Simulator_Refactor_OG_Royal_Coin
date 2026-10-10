@@ -11,6 +11,8 @@ public interface BatchJobRepository extends JpaRepository<BatchJob, Long>, JpaSp
 
 	List<BatchJob> findByStatus(BatchJobStatus status);
 
+	long countByStatus(BatchJobStatus status);
+
 	List<BatchJob> findByStatusAndScheduledForLessThanEqualOrderByScheduledForAscIdAsc(BatchJobStatus status, Instant moment);
 
 	boolean existsByBatchTypeId(Long batchTypeId);

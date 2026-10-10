@@ -55,6 +55,10 @@ app:
     enabled: ${APP_BATCH_ENABLED:true}
     poll-interval: 15s
     shutdown-timeout: 30s
+    quiet-window:
+      start: "00:00"
+      end: "02:30"
+      zone: Europe/Warsaw
   fx:
     zone: Europe/Warsaw
     initial-history: 365d
