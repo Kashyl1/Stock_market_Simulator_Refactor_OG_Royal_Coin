@@ -34,3 +34,14 @@ springBoot {
 tasks.named('bootRun', org.springframework.boot.gradle.tasks.run.BootRun) {
 	args '--spring.profiles.active=dev'
 }
+
+tasks.register('integrationTest', Test) {
+	description = 'Runs the tests that need PostgreSQL in Docker.'
+	group = 'verification'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform {
+		includeTags integrationTestTag
+	}
+	shouldRunAfter tasks.named('test')
+}
