@@ -22,6 +22,7 @@ import com.tradingsimulator.backend.batch.BatchItemStatus;
 import com.tradingsimulator.backend.batch.BatchJob;
 import com.tradingsimulator.backend.batch.BatchJobRepository;
 import com.tradingsimulator.backend.batch.BatchJobStatus;
+import com.tradingsimulator.backend.batch.BatchProperties;
 import com.tradingsimulator.backend.batch.BatchStopRequest;
 import com.tradingsimulator.backend.batch.BatchType;
 import com.tradingsimulator.backend.batch.BatchTypeCode;
@@ -50,7 +51,14 @@ public class BatchAdminServiceImpl implements BatchAdminService {
 	private final BatchPlanner planner;
 	private final RunningBatchJobs running;
 	private final AuditorAware<String> auditorAware;
+	private final BatchProperties properties;
 	private final Clock clock;
+
+	@Override
+	@Transactional(readOnly = true)
+	public BatchEngineView engine() {
+		return BatchEngineView.of(properties, clock.instant(), jobs.countByStatus(BatchJobStatus.RUNNING));
+	}
 
 	@Override
 	@Transactional(readOnly = true)

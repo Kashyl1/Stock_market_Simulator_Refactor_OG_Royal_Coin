@@ -38,6 +38,12 @@ class BatchPlannerImplTest {
 	private static final Instant AFTER_DOWNTIME = Instant.parse("2026-10-08T15:20:00Z");
 	private static final Instant NEXT_SLOT_AFTER_DOWNTIME = Instant.parse("2026-10-08T16:00:00Z");
 	private static final Instant HALF_PAST_10 = Instant.parse("2026-10-08T10:30:00Z");
+	private static final Instant QUIET_MIDNIGHT = Instant.parse("2026-10-09T00:00:00Z");
+	private static final Instant TEN_TO_MIDNIGHT = QUIET_MIDNIGHT.minusSeconds(600);
+	private static final Instant HALF_PAST_MIDNIGHT = Instant.parse("2026-10-09T00:30:00Z");
+	private static final Instant ONE_AT_NIGHT = Instant.parse("2026-10-09T01:00:00Z");
+	private static final Instant JUST_AFTER_THE_QUIET_WINDOW = Instant.parse("2026-10-09T02:31:00Z");
+	private static final Instant THREE_AT_NIGHT = Instant.parse("2026-10-09T03:00:00Z");
 	private static final long FIRST_JOB_ID = 1L;
 	private static final long SECOND_JOB_ID = 2L;
 	private static final int SUCCEEDED_BEFORE_CRASH = 3;
@@ -114,6 +120,42 @@ class BatchPlannerImplTest {
 	}
 
 	@Test
+	void aCronJobDueInTheQuietWindowWaitsAndRunsOnceWhenItEnds() {
+		BatchJob due = TestBatch.cronJob(FIRST_JOB_ID, QUIET_MIDNIGHT);
+		givenDue(due);
+
+		assertThat(plannerAt(HALF_PAST_MIDNIGHT).startDueJobs()).isEmpty();
+		assertThat(due.getStatus()).isEqualTo(BatchJobStatus.SCHEDULED);
+		verify(jobs, never()).delete(any(BatchJob.class));
+		verify(jobs, never()).save(any(BatchJob.class));
+
+		assertThat(plannerAt(JUST_AFTER_THE_QUIET_WINDOW).startDueJobs()).containsExactly(FIRST_JOB_ID);
+		assertPlannedCronJobAt(THREE_AT_NIGHT);
+	}
+
+	@Test
+	void aManualJobWaitsForTheEndOfTheQuietWindow() {
+		BatchJob waiting = TestBatch.manualJob(FIRST_JOB_ID, QUIET_MIDNIGHT);
+		givenDue(waiting);
+
+		assertThat(plannerAt(HALF_PAST_MIDNIGHT).startDueJobs()).isEmpty();
+
+		assertThat(waiting.getStatus()).isEqualTo(BatchJobStatus.SCHEDULED);
+	}
+
+	@Test
+	void aCronJobDueInTheQuietWindowWhileItsTypeStillRunsIsDeletedAsAnyOverrun() {
+		givenRunning(TestBatch.runningJob(FIRST_JOB_ID, TEN_TO_MIDNIGHT));
+		BatchJob overrun = TestBatch.cronJob(SECOND_JOB_ID, QUIET_MIDNIGHT);
+		givenDue(overrun);
+
+		assertThat(plannerAt(QUIET_MIDNIGHT).startDueJobs()).isEmpty();
+
+		verify(jobs).delete(overrun);
+		assertPlannedCronJobAt(ONE_AT_NIGHT);
+	}
+
+	@Test
 	void recoveryFailsTheJobsLeftRunningByACrash() {
 		BatchJob crashed = TestBatch.runningJob(FIRST_JOB_ID, TestBatch.AT_10_00);
 		givenRunning(crashed);
@@ -183,7 +225,7 @@ class BatchPlannerImplTest {
 	}
 
 	private BatchPlanner plannerAt(Instant now) {
-		return new BatchPlannerImpl(types, jobs, items, historyActor, Clock.fixed(now, ZoneOffset.UTC));
+		return new BatchPlannerImpl(types, jobs, items, historyActor, TestBatch.properties(), Clock.fixed(now, ZoneOffset.UTC));
 	}
 
 	private void givenDue(BatchJob... due) {

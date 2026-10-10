@@ -19,6 +19,7 @@ import com.tradingsimulator.backend.batch.BatchItemStatus;
 import com.tradingsimulator.backend.batch.BatchJobStatus;
 import com.tradingsimulator.backend.batch.BatchTypeCode;
 import com.tradingsimulator.backend.batch.service.BatchAdminService;
+import com.tradingsimulator.backend.batch.service.BatchEngineView;
 import com.tradingsimulator.backend.batch.service.BatchItemView;
 import com.tradingsimulator.backend.batch.service.BatchJobFilter;
 import com.tradingsimulator.backend.batch.service.BatchJobView;
@@ -39,6 +40,11 @@ import lombok.RequiredArgsConstructor;
 public class BatchAdminController {
 
 	private final BatchAdminService batch;
+
+	@GetMapping(BatchAdminPaths.ENGINE)
+	public BatchEngineView engine() {
+		return batch.engine();
+	}
 
 	@GetMapping(BatchAdminPaths.TYPES)
 	public List<BatchTypeView> types() {

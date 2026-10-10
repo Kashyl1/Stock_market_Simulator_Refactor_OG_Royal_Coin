@@ -15,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,7 @@ import com.tradingsimulator.backend.batch.BatchJobOrigin;
 import com.tradingsimulator.backend.batch.BatchJobStatus;
 import com.tradingsimulator.backend.batch.BatchTypeCode;
 import com.tradingsimulator.backend.batch.service.BatchAdminService;
+import com.tradingsimulator.backend.batch.service.BatchEngineView;
 import com.tradingsimulator.backend.batch.service.BatchItemView;
 import com.tradingsimulator.backend.batch.service.BatchJobFilter;
 import com.tradingsimulator.backend.batch.service.BatchJobView;
@@ -68,6 +70,8 @@ class BatchAdminControllerTest {
 	private static final String FIRST_JOB_STATUS = "$.content[0].status";
 	private static final String FIRST_ITEM_RATE = "$.content[0].payload.rate";
 	private static final String STATUS = "$.status";
+	private static final String READY_FOR_DEPLOY = "$.readyForDeploy";
+	private static final long NOTHING_RUNNING = 0;
 	private static final Instant NOW = TestBatch.AT_10_00;
 
 	@Autowired
@@ -87,6 +91,15 @@ class BatchAdminControllerTest {
 
 	@MockitoBean
 	private RestAccessDeniedHandler accessDeniedHandler;
+
+	@Test
+	@WithMockUser(roles = ADMIN)
+	void anAdminSeesWhetherTheEngineIsReadyForADeploy() throws Exception {
+		BatchEngineView quiet = new BatchEngineView(true, TestBatch.QUIET_FROM, TestBatch.QUIET_UNTIL, ZoneId.of(TestBatch.UTC), NOTHING_RUNNING, true);
+		when(batch.engine()).thenReturn(quiet);
+
+		mvc.perform(get(path(BatchAdminPaths.ENGINE))).andExpect(status().isOk()).andExpect(jsonPath(READY_FOR_DEPLOY).value(true));
+	}
 
 	@Test
 	@WithMockUser(roles = ADMIN)

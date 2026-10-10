@@ -20,6 +20,7 @@ import com.tradingsimulator.backend.batch.BatchJob;
 import com.tradingsimulator.backend.batch.BatchJobOrigin;
 import com.tradingsimulator.backend.batch.BatchJobRepository;
 import com.tradingsimulator.backend.batch.BatchJobStatus;
+import com.tradingsimulator.backend.batch.BatchProperties;
 import com.tradingsimulator.backend.batch.BatchType;
 import com.tradingsimulator.backend.batch.BatchTypeRepository;
 import com.tradingsimulator.backend.common.error.AppException;
@@ -37,6 +38,7 @@ public class BatchPlannerImpl implements BatchPlanner {
 	private final BatchJobRepository jobs;
 	private final BatchItemRepository items;
 	private final HistoryActor historyActor;
+	private final BatchProperties properties;
 	private final Clock clock;
 
 	@Override
@@ -57,16 +59,17 @@ public class BatchPlannerImpl implements BatchPlanner {
 		Instant now = clock.instant();
 		Map<Long, BatchType> typesById = types.findAll().stream().collect(Collectors.toMap(BatchType::getId, Function.identity()));
 		Set<Long> busyTypes = jobs.findByStatus(BatchJobStatus.RUNNING).stream().map(BatchJob::getBatchTypeId).collect(Collectors.toCollection(HashSet::new));
+		boolean quiet = properties.quietAt(now);
 		List<Long> started = new ArrayList<>();
 		for (BatchJob due : jobs.findByStatusAndScheduledForLessThanEqualOrderByScheduledForAscIdAsc(BatchJobStatus.SCHEDULED, now)) {
 			BatchType type = typesById.get(due.getBatchTypeId());
-			if (!busyTypes.contains(type.getId())) {
+			if (busyTypes.contains(type.getId())) {
+				dropIfOverrun(due, type, now);
+			}
+			else if (!quiet) {
 				start(due, type, now);
 				busyTypes.add(type.getId());
 				started.add(due.getId());
-			}
-			else if (due.isCron()) {
-				dropOverrun(due, type, now);
 			}
 		}
 		return List.copyOf(started);
@@ -96,7 +99,10 @@ public class BatchPlannerImpl implements BatchPlanner {
 		log.info("Batch job {} of {} started", job.getId(), type.getCode());
 	}
 
-	private void dropOverrun(BatchJob job, BatchType type, Instant now) {
+	private void dropIfOverrun(BatchJob job, BatchType type, Instant now) {
+		if (!job.isCron()) {
+			return;
+		}
 		delete(job);
 		planNextCronJob(type, now);
 		log.info("Batch job {} of {} planned for {} was dropped: a job of its type was still running", job.getId(), type.getCode(), job.getScheduledFor());
