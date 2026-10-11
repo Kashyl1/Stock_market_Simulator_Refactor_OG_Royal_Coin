@@ -14,6 +14,7 @@ public enum BatchError implements ErrorCode {
 	JOB_NOT_ACTIVE(HttpStatus.CONFLICT, "batch job {0} is marked running but this application is not running it; it is marked failed on the next start"),
 	JOB_WITHOUT_REPORT(HttpStatus.CONFLICT, "batch job {0} is {1}; there is no failure report to acknowledge"),
 	HANDLER_MISSING(HttpStatus.INTERNAL_SERVER_ERROR, "no handler is registered for batch type {0}"),
+	ENGINE_SWITCH_MISSING(HttpStatus.INTERNAL_SERVER_ERROR, "the batch engine switch row is missing from the database"),
 	JOB_INTERRUPTED(HttpStatus.INTERNAL_SERVER_ERROR, "the application stopped while the job was running"),
 	JOB_STOPPED(HttpStatus.CONFLICT, "the job was stopped by {0}");
 

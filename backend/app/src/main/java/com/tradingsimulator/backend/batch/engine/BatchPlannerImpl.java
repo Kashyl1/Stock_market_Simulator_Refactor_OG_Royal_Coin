@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.tradingsimulator.backend.batch.BatchEngineRepository;
 import com.tradingsimulator.backend.batch.BatchError;
 import com.tradingsimulator.backend.batch.BatchFailure;
 import com.tradingsimulator.backend.batch.BatchItemRepository;
@@ -37,6 +38,7 @@ public class BatchPlannerImpl implements BatchPlanner {
 	private final BatchTypeRepository types;
 	private final BatchJobRepository jobs;
 	private final BatchItemRepository items;
+	private final BatchEngineRepository engines;
 	private final HistoryActor historyActor;
 	private final BatchProperties properties;
 	private final Clock clock;
@@ -59,14 +61,14 @@ public class BatchPlannerImpl implements BatchPlanner {
 		Instant now = clock.instant();
 		Map<Long, BatchType> typesById = types.findAll().stream().collect(Collectors.toMap(BatchType::getId, Function.identity()));
 		Set<Long> busyTypes = jobs.findByStatus(BatchJobStatus.RUNNING).stream().map(BatchJob::getBatchTypeId).collect(Collectors.toCollection(HashSet::new));
-		boolean quiet = properties.quietAt(now);
+		boolean holdingBack = properties.quietAt(now) || engines.current().isPaused();
 		List<Long> started = new ArrayList<>();
 		for (BatchJob due : jobs.findByStatusAndScheduledForLessThanEqualOrderByScheduledForAscIdAsc(BatchJobStatus.SCHEDULED, now)) {
 			BatchType type = typesById.get(due.getBatchTypeId());
 			if (busyTypes.contains(type.getId())) {
 				dropIfOverrun(due, type, now);
 			}
-			else if (!quiet) {
+			else if (!holdingBack) {
 				start(due, type, now);
 				busyTypes.add(type.getId());
 				started.add(due.getId());

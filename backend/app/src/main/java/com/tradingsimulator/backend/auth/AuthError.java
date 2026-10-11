@@ -16,7 +16,10 @@ public enum AuthError implements ErrorCode {
 	REFRESH_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "the session has expired, sign in again"),
 	REFRESH_TOKEN_REUSED(HttpStatus.UNAUTHORIZED, "this session token was already used, so every session of the account was ended"),
 	RESET_TOKEN_INVALID(HttpStatus.BAD_REQUEST, "the password reset token is not valid"),
-	RESET_TOKEN_EXPIRED(HttpStatus.BAD_REQUEST, "the password reset token has expired");
+	RESET_TOKEN_EXPIRED(HttpStatus.BAD_REQUEST, "the password reset token has expired"),
+	ACCOUNT_ALREADY_VERIFIED(HttpStatus.CONFLICT, "this account is already verified; sign in"),
+	VERIFICATION_RESEND_TOO_SOON(HttpStatus.TOO_MANY_REQUESTS, "a verification link was sent less than {0} seconds ago; wait a moment"),
+	VERIFICATION_RESEND_LIMIT(HttpStatus.TOO_MANY_REQUESTS, "no more verification links today; use the newest one or try again tomorrow");
 
 	private static final String CODE_PREFIX = "AUTH.";
 

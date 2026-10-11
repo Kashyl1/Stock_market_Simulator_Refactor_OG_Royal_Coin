@@ -50,6 +50,10 @@ app:
     rsa-public-key: ${APP_AUTH_RSA_PUBLIC_KEY:file:keys/jwt-public.pem}
     verification-token-ttl: 24h
     reset-token-ttl: 1h
+    verification-resend:
+      cooldown: 60s
+      limit: 3
+      window: 24h
     frontend-base-url: ${APP_AUTH_FRONTEND_BASE_URL:http://localhost:4200}
   batch:
     enabled: ${APP_BATCH_ENABLED:true}

@@ -44,6 +44,7 @@ import com.tradingsimulator.backend.auth.service.PasswordResetService;
 import com.tradingsimulator.backend.auth.service.RefreshTokenService;
 import com.tradingsimulator.backend.auth.service.RegistrationResult;
 import com.tradingsimulator.backend.auth.service.RegistrationService;
+import com.tradingsimulator.backend.auth.service.VerificationResendService;
 import com.tradingsimulator.backend.auth.web.dto.ForgotPasswordRequest;
 import com.tradingsimulator.backend.auth.web.dto.LoginRequest;
 import com.tradingsimulator.backend.auth.web.dto.RegisterRequest;
@@ -107,6 +108,9 @@ class AuthControllerTest {
 
 	@MockitoBean
 	private PasswordResetService passwordResetService;
+
+	@MockitoBean
+	private VerificationResendService verificationResendService;
 
 	@MockitoBean
 	private JwtService jwtService;
@@ -216,6 +220,13 @@ class AuthControllerTest {
 		mvc.perform(get(path(AuthPaths.ME)));
 
 		verify(authenticationEntryPoint).commence(any(), any(), any());
+	}
+
+	@Test
+	void sendsTheVerificationLinkAgainWithoutAToken() throws Exception {
+		mvc.perform(postJson(AuthPaths.RESEND_VERIFICATION, new LoginRequest(TestUsers.EMAIL, TestUsers.PASSWORD))).andExpect(status().isAccepted());
+
+		verify(verificationResendService).resend(TestUsers.EMAIL, TestUsers.PASSWORD);
 	}
 
 	@Test

@@ -14,6 +14,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.tradingsimulator.backend.batch.BatchEngine;
+import com.tradingsimulator.backend.batch.BatchEngineRepository;
 import com.tradingsimulator.backend.batch.BatchError;
 import com.tradingsimulator.backend.batch.BatchItem;
 import com.tradingsimulator.backend.batch.BatchItemCounts;
@@ -48,6 +50,7 @@ public class BatchAdminServiceImpl implements BatchAdminService {
 	private final BatchTypeRepository types;
 	private final BatchJobRepository jobs;
 	private final BatchItemRepository items;
+	private final BatchEngineRepository engines;
 	private final BatchPlanner planner;
 	private final RunningBatchJobs running;
 	private final AuditorAware<String> auditorAware;
@@ -57,7 +60,23 @@ public class BatchAdminServiceImpl implements BatchAdminService {
 	@Override
 	@Transactional(readOnly = true)
 	public BatchEngineView engine() {
-		return BatchEngineView.of(properties, clock.instant(), jobs.countByStatus(BatchJobStatus.RUNNING));
+		return viewOf(engines.current());
+	}
+
+	@Override
+	@Transactional
+	public BatchEngineView pauseEngine() {
+		BatchEngine engine = engines.current();
+		engine.pause();
+		return viewOf(engines.saveAndFlush(engine));
+	}
+
+	@Override
+	@Transactional
+	public BatchEngineView resumeEngine() {
+		BatchEngine engine = engines.current();
+		engine.resume();
+		return viewOf(engines.saveAndFlush(engine));
 	}
 
 	@Override
@@ -128,6 +147,10 @@ public class BatchAdminServiceImpl implements BatchAdminService {
 			job.acknowledge(currentAuditor(), clock.instant());
 		}
 		return viewOf(job, typeCodes());
+	}
+
+	private BatchEngineView viewOf(BatchEngine engine) {
+		return BatchEngineView.of(engine, properties, clock.instant(), jobs.countByStatus(BatchJobStatus.RUNNING));
 	}
 
 	private BatchTypeView viewOf(BatchType type) {

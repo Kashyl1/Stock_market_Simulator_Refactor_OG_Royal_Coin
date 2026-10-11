@@ -12,6 +12,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -64,6 +65,19 @@ class OneTimeTokenServiceTest {
 	@Test
 	void takesItsRandomnessFromTheInjectedSource() {
 		assertThat(newService().issue()).isEqualTo(newService().issue());
+	}
+
+	@Test
+	void reissuingRetiresTheUnusedTokensOfThatTypeAndIssuesANewOne() {
+		UserToken older = UserToken.oneTime(TestUsers.USER_ID, TokenType.VERIFY_EMAIL, TOKEN_HASH, NOW.plus(ONE_HOUR));
+		when(userTokens.findByUserIdAndTokenTypeAndConsumedAtIsNull(TestUsers.USER_ID, TokenType.VERIFY_EMAIL)).thenReturn(List.of(older));
+
+		String raw = service.reissueFor(TestUsers.USER_ID, TokenType.VERIFY_EMAIL);
+
+		assertThat(older.getConsumedAt()).isEqualTo(NOW);
+		ArgumentCaptor<UserToken> saved = ArgumentCaptor.forClass(UserToken.class);
+		verify(userTokens).save(saved.capture());
+		assertThat(saved.getValue().getTokenHash()).isEqualTo(service.hash(raw));
 	}
 
 	@Test

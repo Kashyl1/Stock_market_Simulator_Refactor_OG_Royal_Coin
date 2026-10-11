@@ -18,6 +18,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import com.tradingsimulator.backend.batch.BatchEngine;
+import com.tradingsimulator.backend.batch.BatchEngineRepository;
 import com.tradingsimulator.backend.batch.BatchError;
 import com.tradingsimulator.backend.batch.BatchItemCounts;
 import com.tradingsimulator.backend.batch.BatchItemRepository;
@@ -52,12 +54,15 @@ class BatchPlannerImplTest {
 	private final BatchTypeRepository types = mock(BatchTypeRepository.class);
 	private final BatchJobRepository jobs = mock(BatchJobRepository.class);
 	private final BatchItemRepository items = mock(BatchItemRepository.class);
+	private final BatchEngineRepository engines = mock(BatchEngineRepository.class);
 	private final HistoryActor historyActor = mock(HistoryActor.class);
+	private final BatchEngine engine = BatchEngine.active();
 
 	@BeforeEach
 	void stubTypes() {
 		when(types.findAll()).thenReturn(List.of(TestBatch.hourlyType()));
 		when(types.findById(TestBatch.TYPE_ID)).thenReturn(Optional.of(TestBatch.hourlyType()));
+		when(engines.current()).thenReturn(engine);
 	}
 
 	@Test
@@ -131,6 +136,22 @@ class BatchPlannerImplTest {
 
 		assertThat(plannerAt(JUST_AFTER_THE_QUIET_WINDOW).startDueJobs()).containsExactly(FIRST_JOB_ID);
 		assertPlannedCronJobAt(THREE_AT_NIGHT);
+	}
+
+	@Test
+	void nothingStartsWhileTheEngineIsPausedAndADueCronJobRunsOnceAfterResume() {
+		BatchJob due = TestBatch.cronJob(FIRST_JOB_ID, TestBatch.AT_10_00);
+		givenDue(due);
+		engine.pause();
+
+		assertThat(plannerAt(JUST_AFTER_10_00).startDueJobs()).isEmpty();
+		assertThat(due.getStatus()).isEqualTo(BatchJobStatus.SCHEDULED);
+		verify(jobs, never()).delete(any(BatchJob.class));
+
+		engine.resume();
+
+		assertThat(plannerAt(JUST_AFTER_11_00).startDueJobs()).containsExactly(FIRST_JOB_ID);
+		assertPlannedCronJobAt(TestBatch.AT_12_00);
 	}
 
 	@Test
@@ -225,7 +246,7 @@ class BatchPlannerImplTest {
 	}
 
 	private BatchPlanner plannerAt(Instant now) {
-		return new BatchPlannerImpl(types, jobs, items, historyActor, TestBatch.properties(), Clock.fixed(now, ZoneOffset.UTC));
+		return new BatchPlannerImpl(types, jobs, items, engines, historyActor, TestBatch.properties(), Clock.fixed(now, ZoneOffset.UTC));
 	}
 
 	private void givenDue(BatchJob... due) {

@@ -53,6 +53,13 @@ public class OneTimeTokenServiceImpl implements OneTimeTokenService {
 	}
 
 	@Override
+	public String reissueFor(Long userId, TokenType tokenType) {
+		Instant now = clock.instant();
+		userTokens.findByUserIdAndTokenTypeAndConsumedAtIsNull(userId, tokenType).forEach(unused -> unused.setConsumedAt(now));
+		return issueFor(userId, tokenType);
+	}
+
+	@Override
 	public UserToken consume(String rawToken, TokenType tokenType, ErrorCode invalid, ErrorCode expired) {
 		UserToken token = userTokens.findByTokenHashAndTokenType(hash(rawToken), tokenType).orElseThrow(() -> new AppException(invalid));
 		if (token.getConsumedAt() != null) {

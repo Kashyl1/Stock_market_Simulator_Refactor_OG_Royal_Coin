@@ -31,7 +31,7 @@ class LoginServiceTest {
 	private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
 	private final RefreshTokenService refreshTokens = mock(RefreshTokenService.class);
 
-	private final LoginService service = new LoginServiceImpl(users, passwordEncoder, refreshTokens);
+	private final LoginService service = new LoginServiceImpl(new CredentialsVerifierImpl(users, passwordEncoder), refreshTokens);
 
 	@Test
 	void returnsTokensAndTheAccountForTheRightPassword() {

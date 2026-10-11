@@ -6,6 +6,8 @@ public final class BatchAdminPaths {
 
 	public static final String BASE = ApiPaths.API + "/admin/batch";
 	public static final String ENGINE = "/engine";
+	public static final String ENGINE_PAUSE = ENGINE + "/pause";
+	public static final String ENGINE_RESUME = ENGINE + "/resume";
 	public static final String TYPES = "/types";
 	public static final String JOBS = "/jobs";
 	public static final String JOB = JOBS + "/{id}";
