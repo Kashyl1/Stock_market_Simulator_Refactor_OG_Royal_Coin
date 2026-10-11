@@ -14,10 +14,11 @@ import lombok.Setter;
 @Setter
 public class WalletJpa extends AbstractEntity {
 
-	public static final String DEFAULT_CURRENCY = "USD";
-
 	@Column(name = "user_id", nullable = false)
 	private Long userId;
+
+	@Column(name = "portfolio_id")
+	private Long portfolioId;
 
 	@Column(nullable = false, length = 3)
 	private String currency;

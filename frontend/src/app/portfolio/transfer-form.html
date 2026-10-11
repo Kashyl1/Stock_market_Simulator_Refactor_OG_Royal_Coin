@@ -1,0 +1,79 @@
+<section class="card transfer" aria-label="Move money">
+  <h2>Move money</h2>
+
+  <div class="tabs" role="group" aria-label="Direction">
+    @for (option of directions; track option) {
+      <button
+        class="button button--small"
+        type="button"
+        [attr.aria-pressed]="direction() === option"
+        (click)="choose(option)"
+      >
+        {{ directionLabels[option] }}
+      </button>
+    }
+  </div>
+
+  <p class="muted transfer__explanation">
+    @if (direction() === inward) {
+      From your main account into this portfolio.
+    } @else {
+      From this portfolio back to your main account.
+    }
+  </p>
+
+  @if (failure(); as message) {
+    <div class="notice notice--error" role="alert">{{ message }}</div>
+  }
+
+  @if (done(); as transfer) {
+    <div class="notice notice--success" role="status">
+      @if (transfer.direction === inward) {
+        {{ transfer.mainAmount | money: transfer.mainCurrency }} left your main account,
+        {{ transfer.amount | money: transfer.currency }} arrived.
+      } @else {
+        {{ transfer.amount | money: transfer.currency }} left the portfolio,
+        {{ transfer.mainAmount | money: transfer.mainCurrency }} arrived in your main account.
+      }
+    </div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="field">
+      <label for="transfer-amount">Amount in {{ enteredCurrency() }}</label>
+      <input id="transfer-amount" type="number" inputmode="decimal" [formControl]="amountControl" />
+      <p class="field__hint">Available: {{ available() | money: enteredCurrency() }}</p>
+      @if (amountControl.touched && amountControl.invalid) {
+        <p class="field__error">Enter an amount above zero.</p>
+      }
+    </div>
+
+    @if (preview(); as quote) {
+      <dl class="figures transfer__preview">
+        @if (quote.fxRate !== null) {
+          <div>
+            <dt>Rate</dt>
+            <dd>
+              1 {{ quote.mainCurrency }} = {{ quote.fxRate | number: rateFormat }}
+              {{ quote.currency }}
+            </dd>
+          </div>
+          <div>
+            <dt>Conversion fee</dt>
+            <dd>{{ quote.fxFeeAmount | money: quote.mainCurrency }}</dd>
+          </div>
+        }
+        @if (arriving(); as arrival) {
+          <div>
+            <dt>Arrives</dt>
+            <dd class="figures__value">{{ arrival.amount | money: arrival.currency }}</dd>
+          </div>
+        }
+      </dl>
+    } @else if (quoteFailure(); as message) {
+      <p class="field__error">{{ message }}</p>
+    }
+
+    <button class="button button--primary" type="submit" [disabled]="submitting()">Transfer</button>
+  </form>
+</section>

@@ -31,7 +31,18 @@ public class FxConversionServiceImpl implements FxConversionService {
 		if (from.equals(to)) {
 			return BigDecimal.ONE;
 		}
-		return rateInPivot(from, day).divide(rateInPivot(to, day), FxRate.RATE_SCALE, Currency.ROUNDING_MODE);
+		return crossRate(rateInPivot(from, day), rateInPivot(to, day));
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Optional<BigDecimal> findRate(String from, String to, LocalDate day) {
+		supported(from);
+		supported(to);
+		if (from.equals(to)) {
+			return Optional.of(BigDecimal.ONE);
+		}
+		return latestInPivot(from, day).flatMap(fromRate -> latestInPivot(to, day).map(toRate -> crossRate(fromRate, toRate)));
 	}
 
 	@Override
@@ -41,11 +52,18 @@ public class FxConversionServiceImpl implements FxConversionService {
 	}
 
 	private BigDecimal rateInPivot(String currency, LocalDate day) {
+		return latestInPivot(currency, day).orElseThrow(() -> new AppException(FxError.RATE_NOT_AVAILABLE, currency, day));
+	}
+
+	private Optional<BigDecimal> latestInPivot(String currency, LocalDate day) {
 		if (FxRate.PIVOT_CURRENCY.equals(currency)) {
-			return BigDecimal.ONE;
+			return Optional.of(BigDecimal.ONE);
 		}
-		Optional<FxRate> latest = fxRates.findLatestOnOrBefore(currency, FxRate.PIVOT_CURRENCY, day);
-		return latest.map(FxRate::getRate).orElseThrow(() -> new AppException(FxError.RATE_NOT_AVAILABLE, currency, day));
+		return fxRates.findLatestOnOrBefore(currency, FxRate.PIVOT_CURRENCY, day).map(FxRate::getRate);
+	}
+
+	private static BigDecimal crossRate(BigDecimal fromRate, BigDecimal toRate) {
+		return fromRate.divide(toRate, FxRate.RATE_SCALE, Currency.ROUNDING_MODE);
 	}
 
 	private Currency supported(String code) {

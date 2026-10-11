@@ -260,6 +260,42 @@ code {
   white-space: nowrap;
 }
 
+.table__amount {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-md);
+  margin: 0 0 var(--space-sm);
+}
+
+.figures dt {
+  font-size: 0.8rem;
+  color: var(--color-ink-subtle);
+  margin-bottom: var(--space-xs);
+}
+
+.figures dd {
+  margin: 0;
+}
+
+.figures__value {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.currency-tag {
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-sunken);
+  color: var(--color-ink-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
 .tabs {
   display: flex;
   flex-wrap: wrap;

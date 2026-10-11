@@ -1,0 +1,107 @@
+@if (portfolioView(); as portfolio) {
+  <header class="page-header">
+    <a class="muted" [routerLink]="paths.Dashboard">Back to the dashboard</a>
+    <div class="portfolio__title">
+      <h1>{{ portfolio.name }}</h1>
+      <span class="currency-tag">{{ portfolio.currency }}</span>
+    </div>
+  </header>
+
+  <section class="card" aria-label="Overview">
+    <dl class="figures">
+      <div>
+        <dt>Cash</dt>
+        <dd class="figures__value">{{ portfolio.cashBalance | money: portfolio.currency }}</dd>
+      </div>
+      <div>
+        <dt>Value in {{ portfolio.performance.currency }}</dt>
+        <dd class="figures__value">
+          {{ portfolio.performance.value | money: portfolio.performance.currency }}
+        </dd>
+      </div>
+      <div>
+        <dt>Result</dt>
+        <dd><app-performance-result [performance]="portfolio.performance" /></dd>
+      </div>
+    </dl>
+    <dl class="figures">
+      <div>
+        <dt>Put in</dt>
+        <dd>
+          {{ portfolio.performance.putIn | money: portfolio.performance.currency }}
+          <span class="muted">({{ portfolio.contributed | money: portfolio.currency }})</span>
+        </dd>
+      </div>
+      <div>
+        <dt>Taken out</dt>
+        <dd>
+          {{ portfolio.performance.takenOut | money: portfolio.performance.currency }}
+          <span class="muted">({{ portfolio.withdrawn | money: portfolio.currency }})</span>
+        </dd>
+      </div>
+    </dl>
+    <p class="muted">Valued at today's NBP rate, without the fee a conversion back would cost.</p>
+  </section>
+
+  <app-transfer-form
+    [portfolio]="portfolio"
+    [mainAccount]="mainAccount()"
+    (transferred)="reload()"
+  />
+
+  <section class="card" aria-label="Transfers">
+    <h2>Transfers</h2>
+    @if (transferPage(); as page) {
+      @if (page.content.length === 0) {
+        <p class="muted">Nothing has been moved in or out yet.</p>
+      } @else {
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">When</th>
+                <th scope="col">Direction</th>
+                <th scope="col" class="table__amount">Portfolio</th>
+                <th scope="col" class="table__amount">Main account</th>
+                <th scope="col" class="table__amount">Rate</th>
+                <th scope="col" class="table__amount">Fee</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (transfer of page.content; track transfer.id) {
+                <tr class="transfer">
+                  <td class="table__time">{{ transfer.transferredAt | date: dateFormat }}</td>
+                  <td>{{ directionLabels[transfer.direction] }}</td>
+                  <td class="table__amount">{{ transfer.amount | money: transfer.currency }}</td>
+                  <td class="table__amount">
+                    {{ transfer.mainAmount | money: transfer.mainCurrency }}
+                  </td>
+                  <td class="table__amount">
+                    @if (transfer.fxRate !== null) {
+                      {{ transfer.fxRate | number: rateFormat }}
+                    } @else {
+                      <span class="muted">same currency</span>
+                    }
+                  </td>
+                  <td class="table__amount">
+                    {{ transfer.fxFeeAmount | money: transfer.mainCurrency }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    } @else if (transfers.error()) {
+      <p class="notice notice--error">The transfers could not be loaded.</p>
+    }
+  </section>
+} @else if (notFound()) {
+  <section class="card form-card">
+    <h1>Portfolio not found</h1>
+    <p class="muted">It does not exist, or it belongs to someone else.</p>
+    <a class="button" [routerLink]="paths.Dashboard">Back to the dashboard</a>
+  </section>
+} @else if (portfolio.error()) {
+  <p class="notice notice--error">The portfolio could not be loaded.</p>
+}

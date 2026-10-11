@@ -1,0 +1,47 @@
+<section class="card form-card">
+  <h1>New portfolio</h1>
+  <p class="muted">
+    A portfolio keeps its own cash in one currency. Name it after its strategy, then move money into
+    it from your main account.
+  </p>
+
+  @if (failure(); as problem) {
+    <div class="notice notice--error" role="alert">{{ problem.message }}</div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="create()">
+    <div class="field">
+      <label for="portfolio-name">Name</label>
+      <input
+        id="portfolio-name"
+        type="text"
+        [formControl]="form.controls.name"
+        [attr.maxlength]="nameMaxLength"
+      />
+      @if (form.controls.name.touched && form.controls.name.invalid) {
+        <p class="field__error">Give the portfolio a name.</p>
+      }
+    </div>
+
+    <div class="field">
+      <label for="portfolio-currency">Currency</label>
+      <select id="portfolio-currency" [formControl]="form.controls.currency">
+        @for (currency of currencyList(); track currency.code) {
+          <option [value]="currency.code">{{ currency.code }} - {{ currency.name }}</option>
+        }
+      </select>
+      <p class="field__hint">
+        Money in another currency than your main account is converted at the NBP rate of the day,
+        with a conversion fee. The currency cannot be changed later.
+      </p>
+    </div>
+
+    <button class="button button--primary" type="submit" [disabled]="submitting()">
+      Create portfolio
+    </button>
+  </form>
+
+  <p class="form-card__footer">
+    <a [routerLink]="paths.Dashboard">Back to the dashboard</a>
+  </p>
+</section>

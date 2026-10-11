@@ -12,8 +12,7 @@ import com.tradingsimulator.backend.auth.Role;
 import com.tradingsimulator.backend.auth.User;
 import com.tradingsimulator.backend.auth.UserRepository;
 import com.tradingsimulator.backend.config.Profiles;
-import com.tradingsimulator.backend.wallet.Wallet;
-import com.tradingsimulator.backend.wallet.WalletRepository;
+import com.tradingsimulator.backend.wallet.service.MainAccountService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +29,7 @@ public class DevAccountSeeder implements ApplicationRunner {
 	private static final String ADMIN_DISPLAY_NAME = "Admin";
 
 	private final UserRepository users;
-	private final WalletRepository wallets;
+	private final MainAccountService mainAccounts;
 	private final PasswordEncoder passwordEncoder;
 
 	@Override
@@ -42,7 +41,8 @@ public class DevAccountSeeder implements ApplicationRunner {
 		}
 
 		User admin = users.save(User.active(ADMIN_EMAIL, passwordEncoder.encode(ADMIN_PASSWORD), ADMIN_DISPLAY_NAME, Role.ADMIN));
-		wallets.save(Wallet.empty(admin.getId()));
+		mainAccounts.open(admin.getId());
+		mainAccounts.grantStartingBalance(admin.getId());
 		log.info("Dev admin account created: {} / {}", ADMIN_EMAIL, ADMIN_PASSWORD);
 	}
 }

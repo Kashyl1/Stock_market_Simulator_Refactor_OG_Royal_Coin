@@ -11,6 +11,7 @@ import com.tradingsimulator.backend.auth.UserStatus;
 import com.tradingsimulator.backend.auth.UserToken;
 import com.tradingsimulator.backend.auth.token.OneTimeTokenService;
 import com.tradingsimulator.backend.common.error.AppException;
+import com.tradingsimulator.backend.wallet.service.MainAccountService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,6 +21,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 
 	private final UserRepository users;
 	private final OneTimeTokenService oneTimeTokens;
+	private final MainAccountService mainAccounts;
 
 	@Override
 	@Transactional
@@ -32,5 +34,6 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 		}
 
 		user.setStatus(UserStatus.ACTIVE);
+		mainAccounts.grantStartingBalance(user.getId());
 	}
 }

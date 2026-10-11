@@ -1,0 +1,24 @@
+:host {
+  display: inline-block;
+}
+
+.result {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.result--gain {
+  color: var(--color-positive);
+}
+
+.result--loss {
+  color: var(--color-negative);
+}
+
+.result--flat {
+  color: var(--color-ink-muted);
+}
+
+.result__percent {
+  font-weight: 600;
+}

@@ -1,8 +1,13 @@
 const ADMIN_SEGMENT = 'admin';
 const BATCH_SEGMENT = 'batch';
 const JOBS_SEGMENT = 'jobs';
+const PORTFOLIOS_SEGMENT = 'portfolios';
+const NEW_SEGMENT = 'new';
 
-export const BATCH_JOB_ID_PARAM = 'id';
+const ID_PARAM = 'id';
+
+export const BATCH_JOB_ID_PARAM = ID_PARAM;
+export const PORTFOLIO_ID_PARAM = ID_PARAM;
 
 export const AppRoute = {
   Home: '',
@@ -13,6 +18,7 @@ export const AppRoute = {
   ResetPassword: 'reset-password',
   Dashboard: 'dashboard',
   Admin: ADMIN_SEGMENT,
+  Portfolios: PORTFOLIOS_SEGMENT,
   NotFound: '**',
 } as const;
 
@@ -24,6 +30,12 @@ export const AdminRoute = {
   BatchJob: `${BATCH_SEGMENT}/${JOBS_SEGMENT}/:${BATCH_JOB_ID_PARAM}`,
 } as const;
 
+export const PortfolioRoute = {
+  Index: '',
+  New: NEW_SEGMENT,
+  Portfolio: `:${PORTFOLIO_ID_PARAM}`,
+} as const;
+
 export const AppPath = {
   Home: '/',
   Register: `/${AppRoute.Register}`,
@@ -33,6 +45,9 @@ export const AppPath = {
   ResetPassword: `/${AppRoute.ResetPassword}`,
   Dashboard: `/${AppRoute.Dashboard}`,
   AdminBatch: `/${ADMIN_SEGMENT}/${BATCH_SEGMENT}`,
+  NewPortfolio: `/${PORTFOLIOS_SEGMENT}/${NEW_SEGMENT}`,
 } as const;
 
 export const batchJobPath = (id: number): string => `${AppPath.AdminBatch}/${JOBS_SEGMENT}/${id}`;
+
+export const portfolioPath = (id: number): string => `/${PORTFOLIOS_SEGMENT}/${id}`;

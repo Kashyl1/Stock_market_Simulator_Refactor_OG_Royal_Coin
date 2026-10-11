@@ -1,0 +1,28 @@
+:host {
+  display: block;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 0 0 var(--space-md);
+}
+
+.transfer__explanation {
+  margin: var(--space-sm) 0 var(--space-md);
+}
+
+.transfer__preview {
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-sunken);
+}
+
+form {
+  display: grid;
+  gap: var(--space-md);
+  max-width: 32rem;
+}
+
+form .button {
+  justify-self: start;
+}
