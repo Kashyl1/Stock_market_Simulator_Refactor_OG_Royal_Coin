@@ -28,7 +28,7 @@ export class VerifyEmailPage implements OnInit {
   ngOnInit(): void {
     const token = this.token();
     if (!token) {
-      this.failure.set({ message: MISSING_TOKEN_MESSAGE, fieldErrors: {} });
+      this.failure.set({ code: null, message: MISSING_TOKEN_MESSAGE, fieldErrors: {} });
       return;
     }
 

@@ -2,6 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { APP_DISCLAIMER, APP_LEGAL_NOTICE, APP_NAME, APP_TAGLINE } from '../../core/app-info';
 import { AppPath } from '../../core/app-routes';
+import { AuthService } from '../../auth/auth.service';
 import { BackendService } from '../../core/backend.service';
 import { ConnectionStatus } from '../../core/connection-status';
 
@@ -66,12 +67,14 @@ const JOURNEY: readonly JourneyStep[] = [
 })
 export class HomePage {
   private readonly backend = inject(BackendService);
+  private readonly auth = inject(AuthService);
 
   protected readonly appName = APP_NAME;
   protected readonly tagline = APP_TAGLINE;
   protected readonly disclaimer = APP_DISCLAIMER;
   protected readonly legalNotice = APP_LEGAL_NOTICE;
   protected readonly paths = AppPath;
+  protected readonly signedIn = this.auth.isAuthenticated;
   protected readonly features = FEATURES;
   protected readonly journey = JOURNEY;
 

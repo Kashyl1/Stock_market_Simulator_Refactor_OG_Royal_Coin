@@ -2,10 +2,18 @@
 
 <header class="top-bar">
   <div class="top-bar__inner">
-    <a class="brand" [routerLink]="paths.Home">{{ appName }}</a>
+    <a class="brand" [routerLink]="brandLink()">{{ appName }}</a>
 
     <nav class="top-bar__nav" aria-label="Main">
       @if (currentUser(); as user) {
+        @if (isAdmin()) {
+          <a
+            class="button button--small"
+            [routerLink]="paths.AdminBatch"
+            routerLinkActive="is-active"
+            >Admin panel</a
+          >
+        }
         <a
           class="button button--small"
           [routerLink]="paths.Dashboard"

@@ -11,13 +11,17 @@
   --color-accent-strong: #1864ab;
   --color-accent-soft: #e7f1fb;
   --color-positive: #2f9e44;
+  --color-positive-soft: #ebfbee;
   --color-warning: #f59f00;
+  --color-warning-strong: #a15c00;
+  --color-warning-soft: #fff6e0;
   --color-negative: #e03131;
   --color-negative-soft: #fff0f0;
 
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 14px;
+  --radius-pill: 999px;
 
   --space-xs: 0.35rem;
   --space-sm: 0.65rem;
@@ -139,7 +143,8 @@ code {
   font-size: 0.9rem;
 }
 
-.field input {
+.field input,
+.field select {
   padding: 0.55rem 0.7rem;
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
@@ -148,7 +153,8 @@ code {
   color: var(--color-ink);
 }
 
-.field input:focus-visible {
+.field input:focus-visible,
+.field select:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 1px;
 }
@@ -213,4 +219,72 @@ code {
 .field__control input {
   width: 100%;
   padding-right: 2.6rem;
+}
+
+.page-header {
+  display: grid;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-lg);
+}
+
+.page-header h1 {
+  font-size: 1.6rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  vertical-align: top;
+  padding: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table th {
+  color: var(--color-ink-muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.table__time {
+  white-space: nowrap;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.tabs .button[aria-pressed='true'] {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+  color: var(--color-accent-strong);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

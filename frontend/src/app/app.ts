@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component, DestroyRef, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from './auth/auth.service';
@@ -21,6 +21,10 @@ export class App {
   protected readonly paths = AppPath;
   protected readonly currentYear = new Date().getFullYear();
   protected readonly currentUser = this.auth.currentUser;
+  protected readonly isAdmin = this.auth.isAdmin;
+  protected readonly brandLink = computed(() =>
+    this.auth.isAuthenticated() ? AppPath.Dashboard : AppPath.Home,
+  );
 
   protected signOut(): void {
     this.auth

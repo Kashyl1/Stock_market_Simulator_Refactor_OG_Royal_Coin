@@ -1,0 +1,40 @@
+:host {
+  display: block;
+  min-width: 9rem;
+}
+
+.progress {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.progress__bar {
+  display: flex;
+  height: 0.5rem;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--color-surface-sunken);
+}
+
+.progress__succeeded {
+  background: var(--color-positive);
+}
+
+.progress__failed {
+  background: var(--color-negative);
+}
+
+.progress__counts {
+  display: flex;
+  gap: var(--space-xs);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.progress__ok {
+  color: var(--color-positive);
+}
+
+.progress__bad {
+  color: var(--color-negative);
+}

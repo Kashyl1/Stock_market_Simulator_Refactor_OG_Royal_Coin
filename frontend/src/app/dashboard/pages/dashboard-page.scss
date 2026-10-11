@@ -39,3 +39,15 @@ dt {
 dd {
   margin: 0;
 }
+
+.dashboard__admin {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-soft);
+}

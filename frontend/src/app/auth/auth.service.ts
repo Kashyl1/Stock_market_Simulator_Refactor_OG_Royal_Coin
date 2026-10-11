@@ -13,11 +13,13 @@ export const REFRESH_PATH = '/refresh';
 export const LOGOUT_PATH = '/logout';
 export const FORGOT_PASSWORD_PATH = '/forgot-password';
 export const RESET_PASSWORD_PATH = '/reset-password';
+export const RESEND_VERIFICATION_PATH = '/resend-verification';
 export const ME_PATH = '/me';
 
 export const PUBLIC_AUTH_PATHS: readonly string[] = [
   REGISTER_PATH,
   VERIFY_EMAIL_PATH,
+  RESEND_VERIFICATION_PATH,
   LOGIN_PATH,
   REFRESH_PATH,
   LOGOUT_PATH,
@@ -71,6 +73,7 @@ export class AuthService {
   readonly accessToken = this.token.asReadonly();
   readonly currentUser = this.account.asReadonly();
   readonly isAuthenticated = computed(() => this.token() !== null);
+  readonly isAdmin = computed(() => this.account()?.role === Role.Admin);
 
   register(request: RegisterRequest): Observable<RegisterResponse> {
     return this.http.post<RegisterResponse>(`${this.baseUrl}${REGISTER_PATH}`, request);
@@ -88,6 +91,10 @@ export class AuthService {
         map((response) => response.user),
         tap((account) => this.account.set(account)),
       );
+  }
+
+  resendVerification(request: LoginRequest): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}${RESEND_VERIFICATION_PATH}`, request);
   }
 
   requestPasswordReset(email: string): Observable<void> {

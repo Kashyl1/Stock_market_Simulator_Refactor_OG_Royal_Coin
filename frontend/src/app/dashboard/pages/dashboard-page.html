@@ -19,7 +19,12 @@
     </dl>
   }
 
-  <p class="muted">
-    Nothing lives here yet. Wallet, portfolios and trading arrive in the next slices.
-  </p>
+  @if (isAdmin()) {
+    <div class="dashboard__admin">
+      <p>You can see and run the scheduled jobs of the engine.</p>
+      <a class="button button--small" [routerLink]="paths.AdminBatch">Open the batch jobs</a>
+    </div>
+  }
+
+  <p class="muted">Your wallet, portfolios and trading arrive with the next stages.</p>
 </section>

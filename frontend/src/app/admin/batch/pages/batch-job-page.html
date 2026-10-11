@@ -1,0 +1,155 @@
+<a class="back" [routerLink]="paths.AdminBatch">All batch jobs</a>
+
+@if (failure(); as message) {
+  <p class="notice notice--error" role="alert">{{ message }}</p>
+}
+
+@if (jobView(); as job) {
+  <section class="card summary" aria-label="Job">
+    <header class="summary__header">
+      <div>
+        <h1>Job #{{ job.id }}</h1>
+        <p class="muted">{{ job.type }}</p>
+      </div>
+      <app-job-status-badge [status]="job.status" />
+    </header>
+
+    <app-job-progress
+      [succeeded]="job.succeededItems"
+      [failed]="job.failedItems"
+      [total]="job.totalItems"
+    />
+
+    <dl class="summary__facts">
+      <div>
+        <dt>Origin</dt>
+        <dd>{{ originLabels[job.origin] }}, planned by {{ job.plannedBy }}</dd>
+      </div>
+      <div>
+        <dt>Planned for</dt>
+        <dd>{{ job.scheduledFor | date: dateFormat }}</dd>
+      </div>
+      <div>
+        <dt>Started</dt>
+        <dd>{{ job.startedAt | date: dateFormat }}</dd>
+      </div>
+      <div>
+        <dt>Finished</dt>
+        <dd>{{ job.finishedAt | date: dateFormat }}</dd>
+      </div>
+      @if (job.stopRequestedBy) {
+        <div>
+          <dt>Stopped by</dt>
+          <dd>{{ job.stopRequestedBy }}, {{ job.stopRequestedAt | date: dateFormat }}</dd>
+        </div>
+      }
+      @if (job.acknowledgedBy) {
+        <div>
+          <dt>Acknowledged</dt>
+          <dd>{{ job.acknowledgedBy }}, {{ job.acknowledgedAt | date: dateFormat }}</dd>
+        </div>
+      }
+    </dl>
+
+    @if (job.errorMessage) {
+      <p class="notice notice--error summary__error">
+        <code>{{ job.errorCode }}</code> {{ job.errorMessage }}
+      </p>
+    }
+
+    <div class="summary__actions">
+      @if (canStop(job)) {
+        <button class="button button--small" type="button" (click)="stop(job)">Stop</button>
+      }
+      @if (canRemove(job)) {
+        <button class="button button--small" type="button" (click)="remove(job)">Remove</button>
+      }
+      @if (canAcknowledge(job)) {
+        <button class="button button--small" type="button" (click)="acknowledge(job)">
+          Acknowledge
+        </button>
+      }
+    </div>
+  </section>
+
+  <section class="card items" aria-label="Items">
+    <div class="items__toolbar">
+      <h2>Items</h2>
+      <div class="tabs" role="group" aria-label="Which items">
+        <button
+          class="button button--small"
+          type="button"
+          [attr.aria-pressed]="itemStatus() === null"
+          (click)="showItems(null)"
+        >
+          All
+        </button>
+        <button
+          class="button button--small"
+          type="button"
+          [attr.aria-pressed]="itemStatus() === failedStatus"
+          (click)="showItems(failedStatus)"
+        >
+          Failed
+        </button>
+      </div>
+    </div>
+
+    @if (itemPage(); as page) {
+      @if (page.content.length === 0) {
+        <p class="muted">No items here.</p>
+      } @else {
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Item</th>
+                <th scope="col">Status</th>
+                <th scope="col">Details</th>
+                <th scope="col">Processed</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of page.content; track item.id) {
+                <tr class="item">
+                  <td class="item__key">{{ item.key }}</td>
+                  <td><app-job-status-badge [status]="item.status" /></td>
+                  <td>
+                    @if (item.errorMessage) {
+                      <code>{{ item.errorCode }}</code> {{ item.errorMessage }}
+                    } @else {
+                      <pre class="item__payload">{{ item.payload | json }}</pre>
+                    }
+                  </td>
+                  <td class="table__time">{{ item.processedAt | date: dateFormat }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <nav class="pager" aria-label="Pages">
+          <button
+            class="button button--small"
+            type="button"
+            [disabled]="isFirstPage()"
+            (click)="previousPage()"
+          >
+            Previous
+          </button>
+          <span class="muted">Page {{ pageNumber() }} of {{ page.totalPages }}</span>
+          <button
+            class="button button--small"
+            type="button"
+            [disabled]="isLastPage()"
+            (click)="nextPage()"
+          >
+            Next
+          </button>
+        </nav>
+      }
+    }
+  </section>
+} @else if (job.error()) {
+  <p class="notice notice--error">This job could not be loaded.</p>
+}

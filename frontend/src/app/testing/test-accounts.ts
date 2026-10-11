@@ -14,3 +14,5 @@ export const TEST_ACCOUNT: Account = {
   role: Role.User,
   status: UserStatus.Active,
 };
+
+export const TEST_ADMIN_ACCOUNT: Account = { ...TEST_ACCOUNT, role: Role.Admin };
