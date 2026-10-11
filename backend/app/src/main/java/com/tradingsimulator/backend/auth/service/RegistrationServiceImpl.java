@@ -13,8 +13,7 @@ import com.tradingsimulator.backend.auth.UserRepository;
 import com.tradingsimulator.backend.auth.password.PasswordPolicy;
 import com.tradingsimulator.backend.auth.token.OneTimeTokenService;
 import com.tradingsimulator.backend.common.error.AppException;
-import com.tradingsimulator.backend.wallet.Wallet;
-import com.tradingsimulator.backend.wallet.WalletRepository;
+import com.tradingsimulator.backend.wallet.service.MainAccountService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class RegistrationServiceImpl implements RegistrationService {
 
 	private final UserRepository users;
-	private final WalletRepository wallets;
+	private final MainAccountService mainAccounts;
 	private final PasswordPolicy passwordPolicy;
 	private final PasswordEncoder passwordEncoder;
 	private final OneTimeTokenService oneTimeTokens;
@@ -38,7 +37,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 		}
 
 		User user = saveUser(email, password, displayName);
-		wallets.save(Wallet.empty(user.getId()));
+		mainAccounts.open(user.getId());
 
 		String rawToken = oneTimeTokens.issueFor(user.getId(), TokenType.VERIFY_EMAIL);
 		mailNotifier.sendVerificationLink(user.getEmail(), rawToken);

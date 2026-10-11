@@ -88,6 +88,19 @@ class FxConversionServiceImplTest {
 		assertFailsWith(() -> service.rate(TestFx.USD, TestFx.PLN, TestFx.WEDNESDAY), FxError.RATE_NOT_AVAILABLE);
 	}
 
+	@Test
+	void findingARateGivesTheSameRateWhenThereIsOne() {
+		assertThat(service.findRate(TestFx.EUR, TestFx.USD, TestFx.THURSDAY)).contains(service.rate(TestFx.EUR, TestFx.USD, TestFx.THURSDAY));
+		assertThat(service.findRate(TestFx.PLN, TestFx.PLN, TestFx.THURSDAY)).contains(BigDecimal.ONE);
+	}
+
+	@Test
+	void findingARateBeforeTheFirstStoredOneGivesNothing() {
+		when(fxRates.findLatestOnOrBefore(TestFx.USD, TestFx.PLN, TestFx.WEDNESDAY)).thenReturn(Optional.empty());
+
+		assertThat(service.findRate(TestFx.USD, TestFx.PLN, TestFx.WEDNESDAY)).isEmpty();
+	}
+
 	private void givenCurrency(Currency currency) {
 		when(currencies.findByCodeAndActiveTrue(currency.getCode())).thenReturn(Optional.of(currency));
 	}

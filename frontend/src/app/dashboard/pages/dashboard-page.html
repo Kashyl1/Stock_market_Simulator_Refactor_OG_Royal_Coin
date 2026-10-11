@@ -1,30 +1,118 @@
-<section class="card dashboard">
-  @if (account(); as user) {
-    <p class="dashboard__eyebrow">Signed in as</p>
-    <h1>{{ user.displayName }}</h1>
+<header class="page-header">
+  @if (user(); as signedIn) {
+    <h1>Hello, {{ signedIn.displayName }}</h1>
+    <p class="muted">{{ signedIn.email }}</p>
+  }
+</header>
 
-    <dl>
+@if (isAdmin()) {
+  <div class="dashboard__admin">
+    <p>You can see and run the scheduled jobs of the engine.</p>
+    <a class="button button--small" [routerLink]="paths.AdminBatch">Open the batch jobs</a>
+  </div>
+}
+
+<section class="card account" aria-label="Main account">
+  <h2>Main account</h2>
+  @if (mainAccount(); as main) {
+    <dl class="figures">
       <div>
-        <dt>e-mail</dt>
-        <dd>{{ user.email }}</dd>
+        <dt>Cash</dt>
+        <dd class="figures__value">{{ main.cashBalance | money: main.currency }}</dd>
       </div>
       <div>
-        <dt>role</dt>
-        <dd>{{ user.role }}</dd>
+        <dt>Account value</dt>
+        <dd class="figures__value">{{ main.performance.value | money: main.currency }}</dd>
       </div>
       <div>
-        <dt>status</dt>
-        <dd>{{ user.status }}</dd>
+        <dt>Result</dt>
+        <dd><app-performance-result [performance]="main.performance" /></dd>
       </div>
     </dl>
+    <p class="muted">
+      Your cash plus every portfolio in {{ main.currency }}, against the
+      {{ main.performance.putIn | money: main.currency }} of play money you were given.
+    </p>
+  } @else if (account.error()) {
+    <p class="notice notice--error">Your main account could not be loaded.</p>
   }
+</section>
 
-  @if (isAdmin()) {
-    <div class="dashboard__admin">
-      <p>You can see and run the scheduled jobs of the engine.</p>
-      <a class="button button--small" [routerLink]="paths.AdminBatch">Open the batch jobs</a>
-    </div>
+<section class="portfolios" aria-label="Portfolios">
+  <div class="portfolios__header">
+    <h2>Portfolios</h2>
+    <a class="button button--small button--primary" [routerLink]="paths.NewPortfolio">
+      New portfolio
+    </a>
+  </div>
+  @if (portfolioList(); as owned) {
+    @for (portfolio of owned; track portfolio.id) {
+      <a class="card portfolio" [routerLink]="portfolioPath(portfolio.id)">
+        <div class="portfolio__name">
+          <h3>{{ portfolio.name }}</h3>
+          <span class="currency-tag">{{ portfolio.currency }}</span>
+        </div>
+        <dl class="figures">
+          <div>
+            <dt>Cash</dt>
+            <dd>{{ portfolio.cashBalance | money: portfolio.currency }}</dd>
+          </div>
+          <div>
+            <dt>Value</dt>
+            <dd>{{ portfolio.performance.value | money: portfolio.performance.currency }}</dd>
+          </div>
+          <div>
+            <dt>Result</dt>
+            <dd><app-performance-result [performance]="portfolio.performance" /></dd>
+          </div>
+        </dl>
+      </a>
+    } @empty {
+      <p class="card muted">
+        No portfolios yet. Create one, pick its currency and move money into it from your main
+        account.
+      </p>
+    }
+  } @else if (portfolios.error()) {
+    <p class="notice notice--error">Your portfolios could not be loaded.</p>
   }
+</section>
 
-  <p class="muted">Your wallet, portfolios and trading arrive with the next stages.</p>
+<section class="card movements" aria-label="Recent movements">
+  <h2>Recent movements</h2>
+  @if (entryPage(); as page) {
+    @if (page.content.length === 0) {
+      <p class="muted">No money has moved yet.</p>
+    } @else {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">When</th>
+              <th scope="col">What</th>
+              <th scope="col" class="table__amount">Amount</th>
+              <th scope="col" class="table__amount">Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of page.content; track entry.id) {
+              <tr class="entry">
+                <td class="table__time">{{ entry.effectiveAt | date: dateFormat }}</td>
+                <td>
+                  {{ entryLabels[entry.type] }}
+                  @if (entry.portfolioId; as portfolioId) {
+                    <a [routerLink]="portfolioPath(portfolioId)">{{ entry.portfolioName }}</a>
+                  }
+                </td>
+                <td class="table__amount">{{ entry.amount | money: entry.currency : true }}</td>
+                <td class="table__amount">{{ entry.balanceAfter | money: entry.currency }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  } @else if (entries.error()) {
+    <p class="notice notice--error">The movements could not be loaded.</p>
+  }
 </section>

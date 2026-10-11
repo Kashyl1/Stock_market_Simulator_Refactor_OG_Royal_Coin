@@ -35,7 +35,6 @@ import com.tradingsimulator.backend.batch.BatchEngine;
 import com.tradingsimulator.backend.batch.BatchEngineRepository;
 import com.tradingsimulator.backend.batch.BatchJob;
 import com.tradingsimulator.backend.batch.BatchJobRepository;
-import com.tradingsimulator.backend.batch.BatchProperties;
 import com.tradingsimulator.backend.batch.BatchType;
 import com.tradingsimulator.backend.batch.BatchTypeCode;
 import com.tradingsimulator.backend.batch.BatchTypeRepository;
@@ -43,6 +42,7 @@ import com.tradingsimulator.backend.currency.Currency;
 import com.tradingsimulator.backend.currency.CurrencyRepository;
 import com.tradingsimulator.backend.currency.FxRate;
 import com.tradingsimulator.backend.currency.FxRateRepository;
+import com.tradingsimulator.backend.support.TestDatabase;
 import com.tradingsimulator.backend.support.TestFx;
 import com.tradingsimulator.backend.support.TestJwtKeys;
 import com.tradingsimulator.backend.support.TestTags;
@@ -50,16 +50,11 @@ import com.tradingsimulator.backend.support.TestUsers;
 import com.tradingsimulator.backend.wallet.Wallet;
 import com.tradingsimulator.backend.wallet.WalletRepository;
 
-@SpringBootTest(properties = { SchemaIntegrationTest.FLYWAY_ENABLED, SchemaIntegrationTest.HIBERNATE_VALIDATE, SchemaIntegrationTest.BATCH_ENGINE_OFF })
+@SpringBootTest(properties = { TestDatabase.FLYWAY_ENABLED, TestDatabase.HIBERNATE_VALIDATE, TestDatabase.BATCH_ENGINE_OFF })
 @Tag(TestTags.INTEGRATION)
 @Testcontainers
 class SchemaIntegrationTest {
 
-	static final String FLYWAY_ENABLED = "spring.flyway.enabled=true";
-	static final String HIBERNATE_VALIDATE = "spring.jpa.hibernate.ddl-auto=validate";
-	static final String BATCH_ENGINE_OFF = BatchProperties.ENABLED + "=false";
-
-	private static final String POSTGRES_IMAGE = "postgres:18-alpine";
 	private static final List<String> TABLES_KEPT_WITHOUT_HISTORY = List.of("batch_item", "flyway_schema_history", "instrument_quote", "price_candle");
 	private static final String TABLES_WITHOUT_HISTORY_QUERY = "select relname from pg_class where relkind = 'r' and relnamespace = 'public'::regnamespace"
 			+ " and right(relname, 2) <> '_h' and to_regclass(relname || '_h') is null order by relname";
@@ -94,7 +89,7 @@ class SchemaIntegrationTest {
 
 	@Container
 	@ServiceConnection
-	static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(POSTGRES_IMAGE);
+	static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(TestDatabase.POSTGRES_IMAGE);
 
 	@Autowired
 	private UserRepository users;
@@ -134,7 +129,7 @@ class SchemaIntegrationTest {
 	@Test
 	void migratedSchemaMatchesTheEntitiesAndStoresTheEmailInLowerCase() {
 		User saved = users.save(User.pending(TestUsers.EMAIL_IN_CAPITALS, TestUsers.PASSWORD_HASH, TestUsers.DISPLAY_NAME));
-		wallets.save(Wallet.empty(saved.getId()));
+		wallets.save(Wallet.mainAccount(saved.getId(), TestFx.PLN));
 
 		assertThat(saved.getEmail()).isEqualTo(TestUsers.EMAIL);
 		assertThat(users.findByEmailIgnoreCase(TestUsers.EMAIL_IN_CAPITALS)).contains(saved);
@@ -189,8 +184,7 @@ class SchemaIntegrationTest {
 	@Test
 	void aWalletInAnUnknownCurrencyIsRejected() {
 		User owner = users.save(User.pending(WALLET_OWNER_EMAIL, TestUsers.PASSWORD_HASH, TestUsers.DISPLAY_NAME));
-		Wallet wallet = Wallet.empty(owner.getId());
-		wallet.setCurrency(UNKNOWN_CURRENCY);
+		Wallet wallet = Wallet.mainAccount(owner.getId(), UNKNOWN_CURRENCY);
 
 		assertThatThrownBy(() -> wallets.saveAndFlush(wallet)).isInstanceOf(DataIntegrityViolationException.class);
 	}

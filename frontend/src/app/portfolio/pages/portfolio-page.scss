@@ -1,0 +1,21 @@
+:host {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-lg);
+}
+
+.page-header {
+  margin-bottom: 0;
+}
+
+.portfolio__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 0 0 var(--space-md);
+}

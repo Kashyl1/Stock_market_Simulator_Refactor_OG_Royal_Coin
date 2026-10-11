@@ -3,6 +3,8 @@ package com.tradingsimulator.backend.auth.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
@@ -19,6 +21,7 @@ import com.tradingsimulator.backend.auth.UserToken;
 import com.tradingsimulator.backend.auth.token.OneTimeTokenService;
 import com.tradingsimulator.backend.common.error.AppException;
 import com.tradingsimulator.backend.support.TestUsers;
+import com.tradingsimulator.backend.wallet.service.MainAccountService;
 
 class EmailVerificationServiceTest {
 
@@ -28,11 +31,12 @@ class EmailVerificationServiceTest {
 
 	private final UserRepository users = mock(UserRepository.class);
 	private final OneTimeTokenService oneTimeTokens = mock(OneTimeTokenService.class);
+	private final MainAccountService mainAccounts = mock(MainAccountService.class);
 
-	private final EmailVerificationService service = new EmailVerificationServiceImpl(users, oneTimeTokens);
+	private final EmailVerificationService service = new EmailVerificationServiceImpl(users, oneTimeTokens, mainAccounts);
 
 	@Test
-	void activatesThePendingUserBehindTheToken() {
+	void activatesThePendingUserBehindTheTokenAndGrantsTheStartingBalance() {
 		givenToken();
 		User user = TestUsers.withStatus(UserStatus.PENDING_VERIFICATION);
 		when(users.findById(TestUsers.USER_ID)).thenReturn(Optional.of(user));
@@ -40,6 +44,7 @@ class EmailVerificationServiceTest {
 		service.verify(RAW_TOKEN);
 
 		assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
+		verify(mainAccounts).grantStartingBalance(TestUsers.USER_ID);
 	}
 
 	@Test
@@ -65,6 +70,7 @@ class EmailVerificationServiceTest {
 
 		assertThatVerifyFailsWith();
 		assertThat(blocked.getStatus()).isEqualTo(UserStatus.BLOCKED);
+		verifyNoInteractions(mainAccounts);
 	}
 
 	private UserToken consume() {

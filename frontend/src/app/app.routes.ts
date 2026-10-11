@@ -18,6 +18,11 @@ export const routes: Routes = [
     loadComponent: () => import('./dashboard/pages/dashboard-page').then((m) => m.DashboardPage),
   },
   {
+    path: AppRoute.Portfolios,
+    canActivate: [authGuard],
+    loadChildren: () => import('./portfolio/portfolio.routes').then((m) => m.routes),
+  },
+  {
     path: AppRoute.Admin,
     canActivate: [authGuard, adminGuard],
     loadChildren: () => import('./admin/admin.routes').then((m) => m.routes),

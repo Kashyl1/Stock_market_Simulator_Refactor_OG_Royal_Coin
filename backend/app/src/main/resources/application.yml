@@ -71,3 +71,8 @@ app:
       days-per-request: 93
       connect-timeout: 5s
       read-timeout: 10s
+  fees:
+    fx-conversion-rate: 0.005
+  account:
+    currency: PLN
+    starting-balance: 1000.00

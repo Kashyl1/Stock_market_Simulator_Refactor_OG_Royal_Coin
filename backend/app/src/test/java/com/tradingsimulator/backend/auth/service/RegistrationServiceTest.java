@@ -10,8 +10,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.math.BigDecimal;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -30,21 +28,20 @@ import com.tradingsimulator.backend.auth.token.OneTimeTokenService;
 import com.tradingsimulator.backend.common.error.AppException;
 import com.tradingsimulator.backend.support.TestEntities;
 import com.tradingsimulator.backend.support.TestUsers;
-import com.tradingsimulator.backend.wallet.Wallet;
-import com.tradingsimulator.backend.wallet.WalletRepository;
+import com.tradingsimulator.backend.wallet.service.MainAccountService;
 
 class RegistrationServiceTest {
 
 	private static final String RAW_TOKEN = "raw-token";
 
 	private final UserRepository users = mock(UserRepository.class);
-	private final WalletRepository wallets = mock(WalletRepository.class);
+	private final MainAccountService mainAccounts = mock(MainAccountService.class);
 	private final PasswordPolicy passwordPolicy = mock(PasswordPolicy.class);
 	private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
 	private final OneTimeTokenService oneTimeTokens = mock(OneTimeTokenService.class);
 	private final AuthMailNotifier mailNotifier = mock(AuthMailNotifier.class);
 
-	private final RegistrationService service = new RegistrationServiceImpl(users, wallets, passwordPolicy, passwordEncoder, oneTimeTokens, mailNotifier);
+	private final RegistrationService service = new RegistrationServiceImpl(users, mainAccounts, passwordPolicy, passwordEncoder, oneTimeTokens, mailNotifier);
 
 	@BeforeEach
 	void stubCollaborators() {
@@ -54,7 +51,7 @@ class RegistrationServiceTest {
 	}
 
 	@Test
-	void createsAPendingUserWithAnEmptyWalletAndAsksForTheVerificationMail() {
+	void createsAPendingUserWithAMainAccountAndAsksForTheVerificationMail() {
 		RegistrationResult result = register(TestUsers.EMAIL);
 
 		assertThat(result).isEqualTo(new RegistrationResult(TestUsers.USER_ID, UserStatus.PENDING_VERIFICATION));
@@ -67,12 +64,7 @@ class RegistrationServiceTest {
 		assertThat(user.getValue().getRole()).isEqualTo(Role.USER);
 		assertThat(user.getValue().getStatus()).isEqualTo(UserStatus.PENDING_VERIFICATION);
 
-		ArgumentCaptor<Wallet> wallet = ArgumentCaptor.forClass(Wallet.class);
-		verify(wallets).save(wallet.capture());
-		assertThat(wallet.getValue().getUserId()).isEqualTo(TestUsers.USER_ID);
-		assertThat(wallet.getValue().getCurrency()).isEqualTo(Wallet.DEFAULT_CURRENCY);
-		assertThat(wallet.getValue().getCashBalance()).isEqualByComparingTo(BigDecimal.ZERO);
-		assertThat(wallet.getValue().getReservedBalance()).isEqualByComparingTo(BigDecimal.ZERO);
+		verify(mainAccounts).open(TestUsers.USER_ID);
 
 		verify(mailNotifier).sendVerificationLink(TestUsers.EMAIL, RAW_TOKEN);
 	}
@@ -93,7 +85,7 @@ class RegistrationServiceTest {
 
 		assertThatRegisterFailsWith(AuthError.PASSWORD_TOO_WEAK);
 
-		verifyNoInteractions(users, wallets, oneTimeTokens, mailNotifier);
+		verifyNoInteractions(users, mainAccounts, oneTimeTokens, mailNotifier);
 	}
 
 	@Test
@@ -103,7 +95,7 @@ class RegistrationServiceTest {
 		assertThatRegisterFailsWith(AuthError.EMAIL_ALREADY_REGISTERED);
 
 		verify(users, never()).saveAndFlush(any(User.class));
-		verifyNoInteractions(wallets, oneTimeTokens, mailNotifier);
+		verifyNoInteractions(mainAccounts, oneTimeTokens, mailNotifier);
 	}
 
 	@Test
@@ -112,7 +104,7 @@ class RegistrationServiceTest {
 
 		assertThatRegisterFailsWith(AuthError.EMAIL_ALREADY_REGISTERED);
 
-		verifyNoInteractions(wallets, oneTimeTokens, mailNotifier);
+		verifyNoInteractions(mainAccounts, oneTimeTokens, mailNotifier);
 	}
 
 	private RegistrationResult register(String email) {
