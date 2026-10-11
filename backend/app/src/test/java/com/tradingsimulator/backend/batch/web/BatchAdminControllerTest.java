@@ -72,6 +72,8 @@ class BatchAdminControllerTest {
 	private static final String STATUS = "$.status";
 	private static final String READY_FOR_DEPLOY = "$.readyForDeploy";
 	private static final long NOTHING_RUNNING = 0;
+	private static final String ON = "$.on";
+	private static final String SYSTEM = "system";
 	private static final Instant NOW = TestBatch.AT_10_00;
 
 	@Autowired
@@ -95,10 +97,17 @@ class BatchAdminControllerTest {
 	@Test
 	@WithMockUser(roles = ADMIN)
 	void anAdminSeesWhetherTheEngineIsReadyForADeploy() throws Exception {
-		BatchEngineView quiet = new BatchEngineView(true, TestBatch.QUIET_FROM, TestBatch.QUIET_UNTIL, ZoneId.of(TestBatch.UTC), NOTHING_RUNNING, true);
-		when(batch.engine()).thenReturn(quiet);
+		when(batch.engine()).thenReturn(engineView(true, SYSTEM));
 
 		mvc.perform(get(path(BatchAdminPaths.ENGINE))).andExpect(status().isOk()).andExpect(jsonPath(READY_FOR_DEPLOY).value(true));
+	}
+
+	@Test
+	@WithMockUser(roles = ADMIN)
+	void anAdminPausesTheEngine() throws Exception {
+		when(batch.pauseEngine()).thenReturn(engineView(false, PLANNED_BY));
+
+		mvc.perform(post(path(BatchAdminPaths.ENGINE_PAUSE))).andExpect(status().isOk()).andExpect(jsonPath(ON).value(false));
 	}
 
 	@Test
@@ -167,6 +176,10 @@ class BatchAdminControllerTest {
 
 		verify(authenticationEntryPoint).commence(any(), any(), any());
 		verifyNoInteractions(batch);
+	}
+
+	private static BatchEngineView engineView(boolean on, String switchedBy) {
+		return new BatchEngineView(on, switchedBy, NOW, on, TestBatch.QUIET_FROM, TestBatch.QUIET_UNTIL, ZoneId.of(TestBatch.UTC), NOTHING_RUNNING, true);
 	}
 
 	private static BatchJobView scheduledJob() {

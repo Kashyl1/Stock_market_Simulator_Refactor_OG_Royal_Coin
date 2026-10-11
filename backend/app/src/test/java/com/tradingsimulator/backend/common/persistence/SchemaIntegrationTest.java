@@ -31,6 +31,8 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 import com.tradingsimulator.backend.auth.User;
 import com.tradingsimulator.backend.auth.UserRepository;
 import com.tradingsimulator.backend.auth.UserStatus;
+import com.tradingsimulator.backend.batch.BatchEngine;
+import com.tradingsimulator.backend.batch.BatchEngineRepository;
 import com.tradingsimulator.backend.batch.BatchJob;
 import com.tradingsimulator.backend.batch.BatchJobRepository;
 import com.tradingsimulator.backend.batch.BatchProperties;
@@ -108,6 +110,9 @@ class SchemaIntegrationTest {
 
 	@Autowired
 	private BatchTypeRepository batchTypes;
+
+	@Autowired
+	private BatchEngineRepository batchEngines;
 
 	@Autowired
 	private BatchJobRepository batchJobs;
@@ -229,5 +234,12 @@ class SchemaIntegrationTest {
 		Optional<FxRate> onSunday = fxRates.findLatestOnOrBefore(TestFx.USD, TestFx.PLN, EARLIER_SUNDAY);
 
 		assertThat(onSunday).hasValueSatisfying(rate -> assertThat(rate.getRateDate()).isEqualTo(EARLIER_FRIDAY));
+	}
+
+	@Test
+	void theEngineSwitchIsASingleRowThatStartsSwitchedOn() {
+		assertThat(batchEngines.findAll()).singleElement().satisfies(engine -> assertThat(engine.isPaused()).isFalse());
+
+		assertThatThrownBy(() -> batchEngines.saveAndFlush(BatchEngine.active())).isInstanceOf(DataIntegrityViolationException.class);
 	}
 }

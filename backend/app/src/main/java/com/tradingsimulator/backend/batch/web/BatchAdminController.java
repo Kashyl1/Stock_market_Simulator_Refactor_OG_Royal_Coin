@@ -46,6 +46,16 @@ public class BatchAdminController {
 		return batch.engine();
 	}
 
+	@PostMapping(BatchAdminPaths.ENGINE_PAUSE)
+	public BatchEngineView pauseEngine() {
+		return batch.pauseEngine();
+	}
+
+	@PostMapping(BatchAdminPaths.ENGINE_RESUME)
+	public BatchEngineView resumeEngine() {
+		return batch.resumeEngine();
+	}
+
 	@GetMapping(BatchAdminPaths.TYPES)
 	public List<BatchTypeView> types() {
 		return batch.types();

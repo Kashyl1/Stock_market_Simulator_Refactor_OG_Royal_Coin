@@ -7,6 +7,7 @@ import { APP_DISCLAIMER, APP_NAME } from './core/app-info';
 import { AppPath } from './core/app-routes';
 import { signIn } from './testing/auth-session';
 import { attributes, element, elements, texts } from './testing/dom';
+import { TEST_ADMIN_ACCOUNT } from './testing/test-accounts';
 import { TestUsers } from './testing/test-users';
 
 const BRAND = '.brand';
@@ -54,5 +55,25 @@ describe('App', () => {
     expect(attributes(fixture, NAV_LINK, HREF)).toEqual([AppPath.Dashboard]);
     expect(texts(fixture, NAV_LINK)).toEqual([TestUsers.displayName]);
     expect(element(fixture, NAV_BUTTON).textContent).toContain(LOG_OUT_LABEL);
+  });
+
+  it('takes a signed in person home to the dashboard from the brand', () => {
+    const visitor = TestBed.createComponent(App);
+    TestBed.tick();
+    expect(element(visitor, BRAND).getAttribute(HREF)).toBe(AppPath.Home);
+
+    signIn(httpMock);
+    TestBed.tick();
+
+    expect(element(visitor, BRAND).getAttribute(HREF)).toBe(AppPath.Dashboard);
+  });
+
+  it('adds a link to the admin area for an admin only', () => {
+    signIn(httpMock, TEST_ADMIN_ACCOUNT);
+
+    const fixture = TestBed.createComponent(App);
+    TestBed.tick();
+
+    expect(attributes(fixture, NAV_LINK, HREF)).toEqual([AppPath.AdminBatch, AppPath.Dashboard]);
   });
 });

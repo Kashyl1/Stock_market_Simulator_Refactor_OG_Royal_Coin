@@ -1,0 +1,15 @@
+<div class="progress">
+  @if (knownTotal()) {
+    <div class="progress__bar" aria-hidden="true">
+      <span class="progress__succeeded" [style.width.%]="succeededShare()"></span>
+      <span class="progress__failed" [style.width.%]="failedShare()"></span>
+    </div>
+  }
+  <span class="progress__counts">
+    <span class="progress__ok">{{ succeeded() }} ok</span>
+    <span class="progress__bad">{{ failed() }} failed</span>
+    @if (knownTotal(); as total) {
+      <span class="muted">of {{ total }}</span>
+    }
+  </span>
+</div>

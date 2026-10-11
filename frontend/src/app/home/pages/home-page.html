@@ -4,8 +4,12 @@
   <p class="hero__tagline">{{ tagline }}</p>
 
   <div class="hero__actions">
-    <a class="button button--primary" [routerLink]="paths.Register">Create account</a>
-    <a class="button" [routerLink]="paths.Login">Log in</a>
+    @if (signedIn()) {
+      <a class="button button--primary" [routerLink]="paths.Dashboard">Go to your dashboard</a>
+    } @else {
+      <a class="button button--primary" [routerLink]="paths.Register">Create account</a>
+      <a class="button" [routerLink]="paths.Login">Log in</a>
+    }
   </div>
 
   <p class="hero__note">{{ disclaimer }}</p>

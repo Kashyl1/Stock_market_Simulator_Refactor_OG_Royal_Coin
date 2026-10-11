@@ -1,0 +1,31 @@
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.55rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: var(--color-surface-sunken);
+  color: var(--color-ink-muted);
+}
+
+.badge[data-status='RUNNING'] {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+}
+
+.badge[data-status='COMPLETED'],
+.badge[data-status='SUCCEEDED'] {
+  background: var(--color-positive-soft);
+  color: var(--color-positive);
+}
+
+.badge[data-status='COMPLETED_WITH_ERRORS'] {
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+.badge[data-status='FAILED'] {
+  background: var(--color-negative-soft);
+  color: var(--color-negative);
+}

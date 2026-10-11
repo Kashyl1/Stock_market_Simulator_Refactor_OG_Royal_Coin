@@ -1,0 +1,232 @@
+<header class="page-header">
+  <h1>Batch jobs</h1>
+  <p class="muted">What the engine runs on a schedule, what it is doing now, and how it went.</p>
+</header>
+
+@if (failure(); as message) {
+  <p class="notice notice--error" role="alert">{{ message }}</p>
+}
+
+<section class="engine" aria-label="Batch engine">
+  @if (engineStatus(); as status) {
+    @if (status.on) {
+      <div class="card engine__on">
+        <span class="dot" aria-hidden="true"></span>
+        <strong>Batch engine ON</strong>
+        <button class="button button--small" type="button" (click)="turnOff()">Turn off</button>
+      </div>
+    } @else {
+      <div class="engine__off" role="status">
+        <div>
+          <strong>Batch engine OFF</strong>
+          <p>
+            No job starts until it is turned back on. Switched off by {{ status.switchedBy }},
+            {{ status.switchedAt | date: dateFormat }}.
+          </p>
+        </div>
+        <button class="button button--small button--primary" type="button" (click)="turnOn()">
+          Turn on
+        </button>
+      </div>
+    }
+  } @else if (engine.error()) {
+    <p class="card muted">The engine status is not available.</p>
+  }
+</section>
+
+<section class="card plan" aria-label="Plan a job">
+  <h2>Plan a job</h2>
+  <form class="plan__form" [formGroup]="planForm" (ngSubmit)="planJob()">
+    <div class="field">
+      <label for="plan-type">Job type</label>
+      <select id="plan-type" [formControl]="planForm.controls.type">
+        <option value="" disabled>Choose a job type</option>
+        @for (type of enabledTypes(); track type.code) {
+          <option [value]="type.code">{{ type.name }}</option>
+        }
+      </select>
+      @if (planForm.controls.type.touched && planForm.controls.type.invalid) {
+        <p class="field__error">Choose what to run.</p>
+      }
+    </div>
+    <div class="field">
+      <label for="plan-start">Start at</label>
+      <input id="plan-start" type="datetime-local" [formControl]="planForm.controls.startAt" />
+      @if (planForm.controls.startAt.touched && planForm.controls.startAt.invalid) {
+        <p class="field__error">Pick when it should start.</p>
+      }
+    </div>
+    <button class="button button--primary" type="submit">Plan</button>
+  </form>
+  @if (planned(); as job) {
+    <p class="notice notice--success" role="status">
+      Planned <a [routerLink]="jobPath(job.id)">{{ nameOf(job.type) }}</a> for
+      {{ job.scheduledFor | date: dateFormat }}.
+    </p>
+  }
+  <p class="muted">
+    None of today's jobs takes parameters; a job that needs them gets its fields here.
+  </p>
+</section>
+
+<section class="types" aria-label="Job types">
+  <h2>Job types</h2>
+  @for (type of typeList(); track type.code) {
+    <article class="card type">
+      <div class="type__main">
+        <h3>{{ type.name }}</h3>
+        <p class="muted">{{ type.description }}</p>
+        <p class="type__schedule">
+          @if (type.cron) {
+            <code>{{ type.cron }}</code> <span class="muted">{{ type.zone }}</span>
+          } @else {
+            <span class="muted">Runs only when planned by hand</span>
+          }
+        </p>
+      </div>
+      <dl class="type__facts">
+        <div>
+          <dt>Next run</dt>
+          <dd>
+            @if (type.nextRunAt) {
+              {{ type.nextRunAt | date: dateFormat }}
+            } @else {
+              <span class="muted">not planned</span>
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Last run</dt>
+          <dd>
+            @if (type.lastStatus) {
+              <app-job-status-badge [status]="type.lastStatus" />
+              <span class="muted">{{ type.lastFinishedAt | date: dateFormat }}</span>
+            } @else {
+              <span class="muted">never</span>
+            }
+          </dd>
+        </div>
+      </dl>
+      <button
+        class="button button--small button--primary"
+        type="button"
+        [disabled]="!type.enabled"
+        (click)="runNow(type.code)"
+      >
+        Run now
+      </button>
+    </article>
+  }
+</section>
+
+<section class="card jobs" aria-label="Jobs">
+  <div class="jobs__toolbar">
+    <div class="tabs" role="group" aria-label="Which jobs">
+      @for (item of tabs; track item.tab) {
+        <button
+          class="button button--small"
+          type="button"
+          [attr.aria-pressed]="tab() === item.tab"
+          (click)="selectTab(item.tab)"
+        >
+          {{ item.label }}
+        </button>
+      }
+    </div>
+    <label class="jobs__filter">
+      <span class="muted">Type</span>
+      <select (change)="selectType($event)">
+        <option [value]="allTypes">All types</option>
+        @for (type of typeList(); track type.code) {
+          <option [value]="type.code">{{ type.name }}</option>
+        }
+      </select>
+    </label>
+  </div>
+
+  @if (jobPage(); as page) {
+    @if (page.content.length === 0) {
+      <p class="muted jobs__empty">No jobs here.</p>
+    } @else {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Job</th>
+              <th scope="col">Status</th>
+              <th scope="col">Origin</th>
+              <th scope="col">Planned for</th>
+              <th scope="col">Started</th>
+              <th scope="col">Finished</th>
+              <th scope="col">Progress</th>
+              <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (job of page.content; track job.id) {
+              <tr class="job">
+                <td>
+                  <a [routerLink]="jobPath(job.id)">{{ nameOf(job.type) }}</a>
+                </td>
+                <td><app-job-status-badge [status]="job.status" /></td>
+                <td>
+                  {{ originLabels[job.origin] }}
+                  <div class="muted">{{ job.plannedBy }}</div>
+                </td>
+                <td class="table__time">{{ job.scheduledFor | date: dateFormat }}</td>
+                <td class="table__time">{{ job.startedAt | date: dateFormat }}</td>
+                <td class="table__time">{{ job.finishedAt | date: dateFormat }}</td>
+                <td>
+                  <app-job-progress
+                    [succeeded]="job.succeededItems"
+                    [failed]="job.failedItems"
+                    [total]="job.totalItems"
+                  />
+                </td>
+                <td class="job__actions">
+                  @if (canStop(job)) {
+                    <button class="button button--small" type="button" (click)="stop(job)">
+                      Stop
+                    </button>
+                  }
+                  @if (canRemove(job)) {
+                    <button class="button button--small" type="button" (click)="remove(job)">
+                      Remove
+                    </button>
+                  }
+                  @if (canAcknowledge(job)) {
+                    <button class="button button--small" type="button" (click)="acknowledge(job)">
+                      Acknowledge
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <nav class="pager" aria-label="Pages">
+        <button
+          class="button button--small"
+          type="button"
+          [disabled]="isFirstPage()"
+          (click)="previousPage()"
+        >
+          Previous
+        </button>
+        <span class="muted">Page {{ pageNumber() }} of {{ page.totalPages }}</span>
+        <button
+          class="button button--small"
+          type="button"
+          [disabled]="isLastPage()"
+          (click)="nextPage()"
+        >
+          Next
+        </button>
+      </nav>
+    }
+  } @else if (jobs.error()) {
+    <p class="notice notice--error">The jobs could not be loaded.</p>
+  }
+</section>

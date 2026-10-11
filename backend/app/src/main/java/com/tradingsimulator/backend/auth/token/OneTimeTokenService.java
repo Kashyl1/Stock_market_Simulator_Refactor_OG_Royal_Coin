@@ -12,5 +12,7 @@ public interface OneTimeTokenService {
 
 	String issueFor(Long userId, TokenType tokenType);
 
+	String reissueFor(Long userId, TokenType tokenType);
+
 	UserToken consume(String rawToken, TokenType tokenType, ErrorCode invalid, ErrorCode expired);
 }

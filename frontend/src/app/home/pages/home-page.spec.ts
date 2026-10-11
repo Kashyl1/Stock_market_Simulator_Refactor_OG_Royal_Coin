@@ -7,6 +7,7 @@ import { APP_DISCLAIMER, APP_LEGAL_NOTICE, APP_NAME } from '../../core/app-info'
 import { AppPath } from '../../core/app-routes';
 import { HEALTH_PATH, HealthResponse } from '../../core/backend.service';
 import { ConnectionStatus } from '../../core/connection-status';
+import { signIn } from '../../testing/auth-session';
 import { attributes, element, elements } from '../../testing/dom';
 import { HomePage } from './home-page';
 
@@ -48,6 +49,14 @@ describe('HomePage', () => {
     expect(element(fixture, HEADING).textContent).toContain(APP_NAME);
     expect(elements(fixture, FEATURE).length).toBe(FEATURE_COUNT);
     expect(attributes(fixture, CALL_TO_ACTION, HREF)).toEqual([AppPath.Register, AppPath.Login]);
+  });
+
+  it('offers the dashboard instead of the guest buttons once signed in', async () => {
+    signIn(httpMock);
+
+    const fixture = await renderWith(HEALTHY);
+
+    expect(attributes(fixture, CALL_TO_ACTION, HREF)).toEqual([AppPath.Dashboard]);
   });
 
   it('states that it is a simulation and not advice', async () => {

@@ -11,6 +11,10 @@ public interface BatchAdminService {
 
 	BatchEngineView engine();
 
+	BatchEngineView pauseEngine();
+
+	BatchEngineView resumeEngine();
+
 	List<BatchTypeView> types();
 
 	PageResponse<BatchJobView> jobs(BatchJobFilter filter, int page, int size);

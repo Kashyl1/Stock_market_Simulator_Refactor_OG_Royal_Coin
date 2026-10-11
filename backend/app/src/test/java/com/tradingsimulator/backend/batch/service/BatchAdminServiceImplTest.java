@@ -18,6 +18,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.AuditorAware;
 
+import com.tradingsimulator.backend.batch.BatchEngine;
+import com.tradingsimulator.backend.batch.BatchEngineRepository;
 import com.tradingsimulator.backend.batch.BatchError;
 import com.tradingsimulator.backend.batch.BatchFailure;
 import com.tradingsimulator.backend.batch.BatchItemCounts;
@@ -51,6 +53,8 @@ class BatchAdminServiceImplTest {
 	private final BatchTypeRepository types = mock(BatchTypeRepository.class);
 	private final BatchJobRepository jobs = mock(BatchJobRepository.class);
 	private final BatchItemRepository items = mock(BatchItemRepository.class);
+	private final BatchEngineRepository engines = mock(BatchEngineRepository.class);
+	private final BatchEngine engine = BatchEngine.active();
 	private final BatchPlanner planner = mock(BatchPlanner.class);
 	private final RunningBatchJobs running = new RunningBatchJobs();
 	private final AuditorAware<String> auditorAware = () -> Optional.of(ADMIN);
@@ -61,6 +65,8 @@ class BatchAdminServiceImplTest {
 		when(types.findByCode(BatchTypeCode.FX_RATES_NBP)).thenReturn(Optional.of(TestBatch.hourlyType()));
 		when(types.findAll()).thenReturn(List.of(TestBatch.hourlyType()));
 		when(jobs.save(any(BatchJob.class))).thenAnswer(invocation -> invocation.getArgument(0));
+		when(engines.current()).thenReturn(engine);
+		when(engines.saveAndFlush(engine)).thenReturn(engine);
 	}
 
 	@Test
@@ -74,6 +80,29 @@ class BatchAdminServiceImplTest {
 		assertThat(atNight.quietUntil()).isEqualTo(TestBatch.QUIET_UNTIL);
 		assertThat(atNight.readyForDeploy()).isTrue();
 		assertThat(service.engine().readyForDeploy()).isFalse();
+	}
+
+	@Test
+	void pausingSwitchesTheEngineOffAndAnIdlePausedEngineIsReadyForADeploy() {
+		when(jobs.countByStatus(BatchJobStatus.RUNNING)).thenReturn(NOTHING_RUNNING);
+
+		BatchEngineView paused = service.pauseEngine();
+
+		assertThat(engine.isPaused()).isTrue();
+		verify(engines).saveAndFlush(engine);
+		assertThat(paused.on()).isFalse();
+		assertThat(paused.readyForDeploy()).isTrue();
+	}
+
+	@Test
+	void resumingSwitchesTheEngineBackOn() {
+		engine.pause();
+
+		BatchEngineView resumed = service.resumeEngine();
+
+		assertThat(engine.isPaused()).isFalse();
+		assertThat(resumed.on()).isTrue();
+		assertThat(resumed.readyForDeploy()).isFalse();
 	}
 
 	@Test
@@ -184,7 +213,7 @@ class BatchAdminServiceImplTest {
 	}
 
 	private BatchAdminService serviceAt(Instant now) {
-		return new BatchAdminServiceImpl(types, jobs, items, planner, running, auditorAware, TestBatch.properties(), Clock.fixed(now, ZoneOffset.UTC));
+		return new BatchAdminServiceImpl(types, jobs, items, engines, planner, running, auditorAware, TestBatch.properties(), Clock.fixed(now, ZoneOffset.UTC));
 	}
 
 	private BatchJob failedJob() {

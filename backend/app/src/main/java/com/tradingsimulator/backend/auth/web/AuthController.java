@@ -23,6 +23,7 @@ import com.tradingsimulator.backend.auth.service.PasswordResetService;
 import com.tradingsimulator.backend.auth.service.RefreshTokenService;
 import com.tradingsimulator.backend.auth.service.RegistrationResult;
 import com.tradingsimulator.backend.auth.service.RegistrationService;
+import com.tradingsimulator.backend.auth.service.VerificationResendService;
 import com.tradingsimulator.backend.auth.web.dto.AccessTokenResponse;
 import com.tradingsimulator.backend.auth.web.dto.CurrentUserResponse;
 import com.tradingsimulator.backend.auth.web.dto.ForgotPasswordRequest;
@@ -45,6 +46,7 @@ public class AuthController {
 
 	private final RegistrationService registrationService;
 	private final EmailVerificationService emailVerificationService;
+	private final VerificationResendService verificationResendService;
 	private final LoginService loginService;
 	private final RefreshTokenService refreshTokenService;
 	private final CurrentUserService currentUserService;
@@ -60,6 +62,12 @@ public class AuthController {
 	@PostMapping(AuthPaths.VERIFY_EMAIL)
 	public void verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
 		emailVerificationService.verify(request.token());
+	}
+
+	@PostMapping(AuthPaths.RESEND_VERIFICATION)
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	public void resendVerification(@Valid @RequestBody LoginRequest request) {
+		verificationResendService.resend(request.email(), request.password());
 	}
 
 	@PostMapping(AuthPaths.LOGIN)

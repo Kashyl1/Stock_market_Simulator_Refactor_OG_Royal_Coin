@@ -20,6 +20,7 @@ export interface ErrorResponse {
 }
 
 export interface Failure {
+  readonly code: string | null;
   readonly message: string;
   readonly fieldErrors: Readonly<Record<string, string>>;
 }
@@ -28,6 +29,7 @@ export function toFailure(error: HttpErrorResponse): Failure {
   const body = error.error;
   if (!isErrorResponse(body)) {
     return {
+      code: null,
       message:
         error.status === NETWORK_FAILURE_STATUS
           ? OFFLINE_FAILURE_MESSAGE
@@ -36,6 +38,7 @@ export function toFailure(error: HttpErrorResponse): Failure {
     };
   }
   return {
+    code: body.code,
     message: body.message,
     fieldErrors: Object.fromEntries(
       body.fieldErrors.map((fieldError) => [fieldError.field, fieldError.message]),

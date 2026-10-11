@@ -1,10 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AppPath } from '../../core/app-routes';
 import { Failure, toFailure } from '../../core/error-response';
+import { AuthErrorCode } from '../auth-errors';
 import { EMAIL_MAX_LENGTH, PASSWORD_MAX_LENGTH } from '../auth-rules';
 import { REDIRECT_PARAM } from '../auth.guard';
 import { AuthService } from '../auth.service';
@@ -33,6 +34,12 @@ export class LoginPage {
 
   protected readonly submitting = signal(false);
   protected readonly failure = signal<Failure | null>(null);
+  protected readonly needsVerification = computed(
+    () => this.failure()?.code === AuthErrorCode.AccountNotVerified,
+  );
+  protected readonly resending = signal(false);
+  protected readonly linkSent = signal(false);
+  protected readonly resendFailure = signal<string | null>(null);
 
   protected submit(): void {
     if (this.submitting()) {
@@ -45,6 +52,8 @@ export class LoginPage {
 
     this.submitting.set(true);
     this.failure.set(null);
+    this.linkSent.set(false);
+    this.resendFailure.set(null);
 
     this.auth
       .login(this.form.getRawValue())
@@ -54,6 +63,29 @@ export class LoginPage {
         error: (error: HttpErrorResponse) => {
           this.failure.set(toFailure(error));
           this.submitting.set(false);
+        },
+      });
+  }
+
+  protected resendLink(): void {
+    if (this.resending()) {
+      return;
+    }
+    this.resending.set(true);
+    this.linkSent.set(false);
+    this.resendFailure.set(null);
+
+    this.auth
+      .resendVerification(this.form.getRawValue())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.linkSent.set(true);
+          this.resending.set(false);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.resendFailure.set(toFailure(error).message);
+          this.resending.set(false);
         },
       });
   }
