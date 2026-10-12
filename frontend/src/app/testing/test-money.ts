@@ -24,6 +24,7 @@ export const TEST_PORTFOLIO_PERFORMANCE: Performance = {
   value: 389.36,
   putIn: TEST_DEPOSITED,
   takenOut: 0,
+  netDeposits: TEST_DEPOSITED,
   result: -10.64,
   resultPercent: -2.66,
 };
@@ -37,6 +38,7 @@ export const TEST_MAIN_ACCOUNT: AccountView = {
     value: 989.36,
     putIn: TEST_STARTING_BALANCE,
     takenOut: 0,
+    netDeposits: TEST_STARTING_BALANCE,
     result: -10.64,
     resultPercent: -1.06,
   },
@@ -48,8 +50,6 @@ export const TEST_PORTFOLIO: PortfolioView = {
   currency: TEST_PORTFOLIO_CURRENCY,
   cashBalance: TEST_ARRIVED,
   available: TEST_ARRIVED,
-  contributed: TEST_ARRIVED,
-  withdrawn: 0,
   performance: TEST_PORTFOLIO_PERFORMANCE,
   createdAt: MOVED_AT,
 };

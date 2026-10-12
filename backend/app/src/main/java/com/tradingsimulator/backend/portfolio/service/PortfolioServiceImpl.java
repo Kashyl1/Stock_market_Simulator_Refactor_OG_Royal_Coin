@@ -89,7 +89,7 @@ public class PortfolioServiceImpl implements PortfolioService {
 			Wallet wallet = walletOf(walletsByPortfolio, portfolio);
 			TransferSums sums = TransferSums.of(totalsByPortfolio.getOrDefault(portfolio.getId(), List.of()));
 			Performance performance = Performance.of(main.getCode(), valueIn(main, wallet, today), sums.putIn(), sums.takenOut());
-			return PortfolioView.of(portfolio, wallet, sums, performance);
+			return PortfolioView.of(portfolio, wallet, performance);
 		}).toList();
 	}
 

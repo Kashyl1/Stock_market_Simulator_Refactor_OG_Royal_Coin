@@ -55,8 +55,7 @@ public final class TestMoney {
 	}
 
 	public static PortfolioView dollarPortfolio(Performance performance) {
-		return new PortfolioView(PORTFOLIO_ID, PORTFOLIO_NAME, TestFx.USD, ARRIVED_DOLLARS, ARRIVED_DOLLARS, ARRIVED_DOLLARS, BigDecimal.ZERO, performance,
-				NOW);
+		return new PortfolioView(PORTFOLIO_ID, PORTFOLIO_NAME, TestFx.USD, ARRIVED_DOLLARS, ARRIVED_DOLLARS, performance, NOW);
 	}
 
 	private TestMoney() {

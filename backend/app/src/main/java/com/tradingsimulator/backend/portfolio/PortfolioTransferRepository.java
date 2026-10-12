@@ -12,7 +12,7 @@ public interface PortfolioTransferRepository extends JpaRepository<PortfolioTran
 
 	Page<PortfolioTransfer> findByPortfolioId(Long portfolioId, Pageable pageable);
 
-	@Query("select new com.tradingsimulator.backend.portfolio.TransferTotals(t.portfolioId, t.direction, sum(t.amount), sum(t.mainAmount))"
+	@Query("select new com.tradingsimulator.backend.portfolio.TransferTotals(t.portfolioId, t.direction, sum(t.mainAmount))"
 			+ " from PortfolioTransfer t where t.portfolioId in :portfolioIds group by t.portfolioId, t.direction")
 	List<TransferTotals> totalsOf(Collection<Long> portfolioIds);
 }
