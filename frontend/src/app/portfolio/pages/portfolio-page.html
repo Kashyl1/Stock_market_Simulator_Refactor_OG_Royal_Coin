@@ -20,25 +20,24 @@
         </p>
       </div>
       <div class="stat">
+        <p class="stat__label">Net deposits</p>
+        <p class="stat__value">
+          {{ portfolio.performance.netDeposits | money: portfolio.performance.currency }}
+        </p>
+        <p class="stat__note">
+          {{ portfolio.performance.putIn | money: portfolio.performance.currency }} in,
+          {{ portfolio.performance.takenOut | money: portfolio.performance.currency }} out
+        </p>
+      </div>
+      <div class="stat">
         <p class="stat__label">Result</p>
         <p class="stat__value"><app-performance-result [performance]="portfolio.performance" /></p>
       </div>
-      <div class="stat">
-        <p class="stat__label">Put in</p>
-        <p class="stat__value">
-          {{ portfolio.performance.putIn | money: portfolio.performance.currency }}
-        </p>
-        <p class="stat__note">{{ portfolio.contributed | money: portfolio.currency }}</p>
-      </div>
-      <div class="stat">
-        <p class="stat__label">Taken out</p>
-        <p class="stat__value">
-          {{ portfolio.performance.takenOut | money: portfolio.performance.currency }}
-        </p>
-        <p class="stat__note">{{ portfolio.withdrawn | money: portfolio.currency }}</p>
-      </div>
     </div>
-    <p class="muted">Valued at today's NBP rate, without the fee a conversion back would cost.</p>
+    <p class="muted">
+      The result is the value less the net deposits, and its percent is of what went in. Valued at
+      today's NBP rate, without the fee a conversion back would cost.
+    </p>
   </section>
 
   <app-transfer-form

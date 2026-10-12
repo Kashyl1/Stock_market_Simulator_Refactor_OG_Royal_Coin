@@ -21,8 +21,6 @@ export interface PortfolioView {
   readonly currency: string;
   readonly cashBalance: number;
   readonly available: number;
-  readonly contributed: number;
-  readonly withdrawn: number;
   readonly performance: Performance;
   readonly createdAt: string;
 }

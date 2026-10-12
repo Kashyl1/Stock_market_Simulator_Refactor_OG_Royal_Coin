@@ -16,11 +16,12 @@ import {
   TEST_PORTFOLIO,
   TEST_PORTFOLIO_ID,
   TEST_PORTFOLIO_NAME,
+  TEST_PORTFOLIO_PERFORMANCE,
   TEST_QUOTE,
   TEST_TRANSFER,
   apiUrl,
 } from '../../testing/test-money';
-import { DIRECTION_LABELS, TransferDirection } from '../portfolio-models';
+import { DIRECTION_LABELS, PortfolioView, TransferDirection } from '../portfolio-models';
 import {
   PORTFOLIOS_PATH,
   PortfolioParam,
@@ -57,6 +58,22 @@ const NOT_ENOUGH_BODY = {
   fieldErrors: [],
 };
 const TOO_MUCH = '1500';
+const STAT = '.stat';
+const STAT_VALUE = '.stat__value';
+const STAT_NOTE = '.stat__note';
+const NET_DEPOSITS = 'Net deposits';
+const TAKEN_OUT = 150;
+const PARTLY_WITHDRAWN: PortfolioView = {
+  ...TEST_PORTFOLIO,
+  performance: {
+    ...TEST_PORTFOLIO_PERFORMANCE,
+    takenOut: TAKEN_OUT,
+    netDeposits: TEST_DEPOSITED - TAKEN_OUT,
+  },
+};
+const NET_DEPOSITS_TEXT = '250.00 PLN';
+const PUT_IN_TEXT = '400.00 PLN in';
+const TAKEN_OUT_TEXT = '150.00 PLN out';
 
 describe('PortfolioPage', () => {
   let httpMock: HttpTestingController;
@@ -80,6 +97,15 @@ describe('PortfolioPage', () => {
     expect(page).toContain('389.36 PLN');
     expect(page).toContain('(-2.66%)');
     expect(elements(fixture, TRANSFER_ROW).length).toBe(1);
+  });
+
+  it('shows what went in and out as net deposits', async () => {
+    const fixture = await render(PARTLY_WITHDRAWN);
+
+    const tile = elements(fixture, STAT).find((stat) => stat.textContent?.includes(NET_DEPOSITS));
+    expect(tile?.querySelector(STAT_VALUE)?.textContent).toContain(NET_DEPOSITS_TEXT);
+    expect(tile?.querySelector(STAT_NOTE)?.textContent).toContain(PUT_IN_TEXT);
+    expect(tile?.querySelector(STAT_NOTE)?.textContent).toContain(TAKEN_OUT_TEXT);
   });
 
   it('previews what arrives before the money moves', async () => {
@@ -174,17 +200,17 @@ describe('PortfolioPage', () => {
     expect(element(fixture, HEADING).textContent).toContain('Portfolio not found');
   });
 
-  async function render(): Promise<ComponentFixture<PortfolioPage>> {
+  async function render(portfolio = TEST_PORTFOLIO): Promise<ComponentFixture<PortfolioPage>> {
     const fixture = TestBed.createComponent(PortfolioPage);
     fixture.componentRef.setInput(PORTFOLIO_ID_PARAM, String(TEST_PORTFOLIO_ID));
     TestBed.tick();
-    answerPageLoad();
+    answerPageLoad(portfolio);
     await fixture.whenStable();
     return fixture;
   }
 
-  function answerPageLoad(): void {
-    httpMock.expectOne(PORTFOLIO_URL).flush(TEST_PORTFOLIO);
+  function answerPageLoad(portfolio = TEST_PORTFOLIO): void {
+    httpMock.expectOne(PORTFOLIO_URL).flush(portfolio);
     httpMock.expectOne(apiUrl(ACCOUNT_PATH)).flush(TEST_MAIN_ACCOUNT);
     const transfers = transfersRequest();
     expect(transfers.request.params.get(PortfolioParam.Size)).toBe(String(RECENT_TRANSFERS));

@@ -94,17 +94,17 @@ class PortfolioServiceImplTest {
 	@Test
 	void valuesAPortfolioInZlotyAgainstTheZlotyThatWentIntoIt() {
 		when(portfolios.ownedBy(TestUsers.USER_ID, TestMoney.PORTFOLIO_ID)).thenReturn(TestMoney.portfolio());
-		TransferTotals deposit = new TransferTotals(TestMoney.PORTFOLIO_ID, TransferDirection.IN, TestMoney.ARRIVED_DOLLARS, TestMoney.DEPOSITED_ZLOTY);
+		TransferTotals deposit = new TransferTotals(TestMoney.PORTFOLIO_ID, TransferDirection.IN, TestMoney.DEPOSITED_ZLOTY);
 		givenPortfolioWallet(TestMoney.ARRIVED_DOLLARS, List.of(deposit));
 
 		PortfolioView portfolio = service.portfolio(TestUsers.USER_ID, TestMoney.PORTFOLIO_ID);
 
 		assertThat(portfolio.cashBalance()).isEqualByComparingTo(TestMoney.ARRIVED_DOLLARS);
-		assertThat(portfolio.contributed()).isEqualByComparingTo(TestMoney.ARRIVED_DOLLARS);
-		assertThat(portfolio.withdrawn()).isEqualByComparingTo(BigDecimal.ZERO);
 		assertThat(portfolio.performance().currency()).isEqualTo(TestFx.PLN);
 		assertThat(portfolio.performance().value()).isEqualByComparingTo(TestMoney.DOLLARS_IN_ZLOTY);
 		assertThat(portfolio.performance().putIn()).isEqualByComparingTo(TestMoney.DEPOSITED_ZLOTY);
+		assertThat(portfolio.performance().takenOut()).isEqualByComparingTo(BigDecimal.ZERO);
+		assertThat(portfolio.performance().netDeposits()).isEqualByComparingTo(TestMoney.DEPOSITED_ZLOTY);
 		assertThat(portfolio.performance().result()).isEqualByComparingTo("-10.64");
 		assertThat(portfolio.performance().resultPercent()).isEqualByComparingTo("-2.66");
 	}

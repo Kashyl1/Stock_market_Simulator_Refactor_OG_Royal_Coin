@@ -32,6 +32,7 @@ import com.tradingsimulator.backend.currency.FxRateRepository;
 import com.tradingsimulator.backend.portfolio.service.PortfolioService;
 import com.tradingsimulator.backend.portfolio.service.PortfolioTransferService;
 import com.tradingsimulator.backend.portfolio.service.PortfolioView;
+import com.tradingsimulator.backend.portfolio.service.TransferView;
 import com.tradingsimulator.backend.support.TestDatabase;
 import com.tradingsimulator.backend.support.TestFx;
 import com.tradingsimulator.backend.support.TestJwtKeys;
@@ -111,13 +112,14 @@ class PortfolioCashIntegrationTest {
 		fxRates.save(TestFx.stored(TestFx.USD, LocalDate.now(clock.withZone(TestFx.WARSAW)), TestFx.USD_MID));
 		PortfolioView dollars = portfolioService.create(userId, TestMoney.PORTFOLIO_NAME, TestFx.USD);
 
-		transferService.transfer(userId, dollars.id(), TransferDirection.IN, TestMoney.DEPOSITED_ZLOTY);
-		transferService.transfer(userId, dollars.id(), TransferDirection.OUT, TestMoney.WITHDRAWN_DOLLARS);
+		TransferView deposit = transferService.transfer(userId, dollars.id(), TransferDirection.IN, TestMoney.DEPOSITED_ZLOTY);
+		TransferView withdrawal = transferService.transfer(userId, dollars.id(), TransferDirection.OUT, TestMoney.WITHDRAWN_DOLLARS);
 
 		PortfolioView portfolio = portfolioService.portfolio(userId, dollars.id());
-		assertThat(portfolio.cashBalance()).isEqualByComparingTo(portfolio.contributed().subtract(TestMoney.WITHDRAWN_DOLLARS));
-		assertThat(portfolio.withdrawn()).isEqualByComparingTo(TestMoney.WITHDRAWN_DOLLARS);
+		assertThat(portfolio.cashBalance()).isEqualByComparingTo(deposit.amount().subtract(TestMoney.WITHDRAWN_DOLLARS));
 		assertThat(portfolio.performance().putIn()).isEqualByComparingTo(TestMoney.DEPOSITED_ZLOTY);
+		assertThat(portfolio.performance().takenOut()).isEqualByComparingTo(withdrawal.mainAmount());
+		assertThat(portfolio.performance().netDeposits()).isEqualByComparingTo(TestMoney.DEPOSITED_ZLOTY.subtract(withdrawal.mainAmount()));
 		assertThat(portfolio.performance().result()).isNegative();
 		Wallet mainAccount = wallets.mainAccountOf(userId);
 		BigDecimal mainCash = TestMoney.STARTING_BALANCE.subtract(TestMoney.DEPOSITED_ZLOTY).add(portfolio.performance().takenOut());
