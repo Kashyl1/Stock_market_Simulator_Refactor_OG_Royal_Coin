@@ -2,9 +2,16 @@
   display: block;
 }
 
+.transfer__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
 h2 {
   font-size: 1.15rem;
-  margin: 0 0 var(--space-md);
 }
 
 .transfer__explanation {
@@ -21,6 +28,10 @@ form {
   display: grid;
   gap: var(--space-md);
   max-width: 32rem;
+}
+
+form .field {
+  margin-bottom: 0;
 }
 
 form .button {

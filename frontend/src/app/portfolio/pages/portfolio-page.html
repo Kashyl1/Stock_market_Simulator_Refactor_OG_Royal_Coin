@@ -1,45 +1,43 @@
 @if (portfolioView(); as portfolio) {
   <header class="page-header">
-    <a class="muted" [routerLink]="paths.Dashboard">Back to the dashboard</a>
+    <a class="back-link" [routerLink]="paths.Dashboard">Back to the dashboard</a>
     <div class="portfolio__title">
       <h1>{{ portfolio.name }}</h1>
       <span class="currency-tag">{{ portfolio.currency }}</span>
     </div>
   </header>
 
-  <section class="card" aria-label="Overview">
-    <dl class="figures">
-      <div>
-        <dt>Cash</dt>
-        <dd class="figures__value">{{ portfolio.cashBalance | money: portfolio.currency }}</dd>
+  <section class="section" aria-label="Overview">
+    <div class="stats">
+      <div class="stat">
+        <p class="stat__label">Cash</p>
+        <p class="stat__value">{{ portfolio.cashBalance | money: portfolio.currency }}</p>
       </div>
-      <div>
-        <dt>Value in {{ portfolio.performance.currency }}</dt>
-        <dd class="figures__value">
+      <div class="stat">
+        <p class="stat__label">Value in {{ portfolio.performance.currency }}</p>
+        <p class="stat__value">
           {{ portfolio.performance.value | money: portfolio.performance.currency }}
-        </dd>
+        </p>
       </div>
-      <div>
-        <dt>Result</dt>
-        <dd><app-performance-result [performance]="portfolio.performance" /></dd>
+      <div class="stat">
+        <p class="stat__label">Result</p>
+        <p class="stat__value"><app-performance-result [performance]="portfolio.performance" /></p>
       </div>
-    </dl>
-    <dl class="figures">
-      <div>
-        <dt>Put in</dt>
-        <dd>
+      <div class="stat">
+        <p class="stat__label">Put in</p>
+        <p class="stat__value">
           {{ portfolio.performance.putIn | money: portfolio.performance.currency }}
-          <span class="muted">({{ portfolio.contributed | money: portfolio.currency }})</span>
-        </dd>
+        </p>
+        <p class="stat__note">{{ portfolio.contributed | money: portfolio.currency }}</p>
       </div>
-      <div>
-        <dt>Taken out</dt>
-        <dd>
+      <div class="stat">
+        <p class="stat__label">Taken out</p>
+        <p class="stat__value">
           {{ portfolio.performance.takenOut | money: portfolio.performance.currency }}
-          <span class="muted">({{ portfolio.withdrawn | money: portfolio.currency }})</span>
-        </dd>
+        </p>
+        <p class="stat__note">{{ portfolio.withdrawn | money: portfolio.currency }}</p>
       </div>
-    </dl>
+    </div>
     <p class="muted">Valued at today's NBP rate, without the fee a conversion back would cost.</p>
   </section>
 
@@ -49,11 +47,11 @@
     (transferred)="reload()"
   />
 
-  <section class="card" aria-label="Transfers">
+  <section class="section" aria-label="Transfers">
     <h2>Transfers</h2>
     @if (transferPage(); as page) {
       @if (page.content.length === 0) {
-        <p class="muted">Nothing has been moved in or out yet.</p>
+        <p class="empty">Nothing has been moved in or out yet.</p>
       } @else {
         <div class="table-wrap">
           <table class="table">
@@ -100,7 +98,7 @@
   <section class="card form-card">
     <h1>Portfolio not found</h1>
     <p class="muted">It does not exist, or it belongs to someone else.</p>
-    <a class="button" [routerLink]="paths.Dashboard">Back to the dashboard</a>
+    <a class="button button--primary" [routerLink]="paths.Dashboard">Back to the dashboard</a>
   </section>
 } @else if (portfolio.error()) {
   <p class="notice notice--error">The portfolio could not be loaded.</p>

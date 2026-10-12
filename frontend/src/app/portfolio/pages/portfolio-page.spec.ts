@@ -31,6 +31,9 @@ import {
 import { PortfolioPage } from './portfolio-page';
 
 const ARRIVED_DOLLARS = '99.50 USD';
+const SECOND_AMOUNT = '500';
+const SECOND_ARRIVAL = 124.38;
+const SECOND_ARRIVAL_TEXT = '124.38 USD';
 const GET = 'GET';
 const POST = 'POST';
 const HEADING = 'h1';
@@ -93,6 +96,21 @@ describe('PortfolioPage', () => {
     expect(element(fixture, PREVIEW).textContent).toContain(ARRIVED_DOLLARS);
   });
 
+  it('keeps the preview in place while a new amount is quoted', async () => {
+    const fixture = await render();
+    typeInto(fixture, AMOUNT, String(TEST_DEPOSITED));
+    httpMock.expectOne((request) => request.url === QUOTE_URL).flush(TEST_QUOTE);
+    await fixture.whenStable();
+
+    typeInto(fixture, AMOUNT, SECOND_AMOUNT);
+    const second = httpMock.expectOne((request) => request.url === QUOTE_URL);
+
+    expect(element(fixture, PREVIEW).textContent).toContain(ARRIVED_DOLLARS);
+    second.flush({ ...TEST_QUOTE, amount: SECOND_ARRIVAL });
+    await fixture.whenStable();
+    expect(element(fixture, PREVIEW).textContent).toContain(SECOND_ARRIVAL_TEXT);
+  });
+
   it('withdraws in the currency of the portfolio', async () => {
     const fixture = await render();
 
@@ -127,6 +145,7 @@ describe('PortfolioPage', () => {
     await fixture.whenStable();
 
     expect(element(fixture, SUCCESS_NOTICE).textContent).toContain(ARRIVED_DOLLARS);
+    expect(element(fixture, SUCCESS_NOTICE).textContent).toContain(TEST_PORTFOLIO_NAME);
   });
 
   it('says why a transfer was refused', async () => {

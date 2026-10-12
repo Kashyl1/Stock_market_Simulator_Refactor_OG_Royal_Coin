@@ -16,7 +16,7 @@ export const WalletEntryType = {
 export type WalletEntryType = (typeof WalletEntryType)[keyof typeof WalletEntryType];
 
 export const ENTRY_LABELS: Readonly<Record<WalletEntryType, string>> = {
-  [WalletEntryType.Deposit]: 'Play money granted',
+  [WalletEntryType.Deposit]: 'Virtual money granted',
   [WalletEntryType.Withdrawal]: 'Withdrawal',
   [WalletEntryType.TransferIn]: 'Back from',
   [WalletEntryType.TransferOut]: 'Moved to',

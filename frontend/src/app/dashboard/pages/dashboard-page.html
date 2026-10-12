@@ -1,88 +1,88 @@
 <header class="page-header">
   @if (user(); as signedIn) {
+    <p class="eyebrow">Dashboard</p>
     <h1>Hello, {{ signedIn.displayName }}</h1>
     <p class="muted">{{ signedIn.email }}</p>
   }
 </header>
 
 @if (isAdmin()) {
-  <div class="dashboard__admin">
+  <div class="admin-hint">
     <p>You can see and run the scheduled jobs of the engine.</p>
     <a class="button button--small" [routerLink]="paths.AdminBatch">Open the batch jobs</a>
   </div>
 }
 
-<section class="card account" aria-label="Main account">
+<section class="section account" aria-label="Main account">
   <h2>Main account</h2>
   @if (mainAccount(); as main) {
-    <dl class="figures">
-      <div>
-        <dt>Cash</dt>
-        <dd class="figures__value">{{ main.cashBalance | money: main.currency }}</dd>
+    <div class="stats">
+      <div class="stat">
+        <p class="stat__label">Cash</p>
+        <p class="stat__value">{{ main.cashBalance | money: main.currency }}</p>
       </div>
-      <div>
-        <dt>Account value</dt>
-        <dd class="figures__value">{{ main.performance.value | money: main.currency }}</dd>
+      <div class="stat">
+        <p class="stat__label">Account value</p>
+        <p class="stat__value">{{ main.performance.value | money: main.currency }}</p>
       </div>
-      <div>
-        <dt>Result</dt>
-        <dd><app-performance-result [performance]="main.performance" /></dd>
+      <div class="stat">
+        <p class="stat__label">Result</p>
+        <p class="stat__value"><app-performance-result [performance]="main.performance" /></p>
       </div>
-    </dl>
+    </div>
     <p class="muted">
       Your cash plus every portfolio in {{ main.currency }}, against the
-      {{ main.performance.putIn | money: main.currency }} of play money you were given.
+      {{ main.performance.putIn | money: main.currency }} of virtual money you were given.
     </p>
   } @else if (account.error()) {
     <p class="notice notice--error">Your main account could not be loaded.</p>
   }
 </section>
 
-<section class="portfolios" aria-label="Portfolios">
-  <div class="portfolios__header">
+<section class="section" aria-label="Portfolios">
+  <div class="section__header">
     <h2>Portfolios</h2>
     <a class="button button--small button--primary" [routerLink]="paths.NewPortfolio">
       New portfolio
     </a>
   </div>
   @if (portfolioList(); as owned) {
-    @for (portfolio of owned; track portfolio.id) {
-      <a class="card portfolio" [routerLink]="portfolioPath(portfolio.id)">
-        <div class="portfolio__name">
-          <h3>{{ portfolio.name }}</h3>
-          <span class="currency-tag">{{ portfolio.currency }}</span>
-        </div>
-        <dl class="figures">
-          <div>
-            <dt>Cash</dt>
-            <dd>{{ portfolio.cashBalance | money: portfolio.currency }}</dd>
+    <div class="tiles">
+      @for (portfolio of owned; track portfolio.id) {
+        <a class="tile portfolio" [routerLink]="portfolioPath(portfolio.id)">
+          <div class="portfolio__name">
+            <h3>{{ portfolio.name }}</h3>
+            <span class="currency-tag">{{ portfolio.currency }}</span>
           </div>
-          <div>
-            <dt>Value</dt>
-            <dd>{{ portfolio.performance.value | money: portfolio.performance.currency }}</dd>
-          </div>
-          <div>
-            <dt>Result</dt>
-            <dd><app-performance-result [performance]="portfolio.performance" /></dd>
-          </div>
-        </dl>
-      </a>
-    } @empty {
-      <p class="card muted">
-        No portfolios yet. Create one, pick its currency and move money into it from your main
-        account.
-      </p>
-    }
+          <dl class="portfolio__figures">
+            <div>
+              <dt>Cash</dt>
+              <dd>{{ portfolio.cashBalance | money: portfolio.currency }}</dd>
+            </div>
+            <div>
+              <dt>Value</dt>
+              <dd>{{ portfolio.performance.value | money: portfolio.performance.currency }}</dd>
+            </div>
+          </dl>
+          <app-performance-result [performance]="portfolio.performance" />
+        </a>
+      } @empty {
+        <p class="empty">
+          No portfolios yet. Create one, pick its currency and move money into it from your main
+          account.
+        </p>
+      }
+    </div>
   } @else if (portfolios.error()) {
     <p class="notice notice--error">Your portfolios could not be loaded.</p>
   }
 </section>
 
-<section class="card movements" aria-label="Recent movements">
+<section class="section" aria-label="Recent movements">
   <h2>Recent movements</h2>
   @if (entryPage(); as page) {
     @if (page.content.length === 0) {
-      <p class="muted">No money has moved yet.</p>
+      <p class="empty">No money has moved yet.</p>
     } @else {
       <div class="table-wrap">
         <table class="table">

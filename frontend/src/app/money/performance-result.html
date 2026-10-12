@@ -1,6 +1,8 @@
 @if (performance().result !== null) {
   <span class="result" [class]="toneClass()">
-    {{ performance().result | money: performance().currency : true }}
+    <span class="result__amount">{{
+      performance().result | money: performance().currency : true
+    }}</span>
     @if (percent(); as shown) {
       <span class="result__percent">({{ shown }})</span>
     }

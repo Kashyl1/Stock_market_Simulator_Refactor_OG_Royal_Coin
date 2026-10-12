@@ -13,7 +13,9 @@
       <div class="card engine__on">
         <span class="dot" aria-hidden="true"></span>
         <strong>Batch engine ON</strong>
-        <button class="button button--small" type="button" (click)="turnOff()">Turn off</button>
+        <button class="button button--small button--danger" type="button" (click)="turnOff()">
+          Turn off
+        </button>
       </div>
     } @else {
       <div class="engine__off" role="status">
@@ -24,9 +26,7 @@
             {{ status.switchedAt | date: dateFormat }}.
           </p>
         </div>
-        <button class="button button--small button--primary" type="button" (click)="turnOn()">
-          Turn on
-        </button>
+        <button class="button button--small" type="button" (click)="turnOn()">Turn on</button>
       </div>
     }
   } @else if (engine.error()) {
@@ -108,7 +108,7 @@
         </div>
       </dl>
       <button
-        class="button button--small button--primary"
+        class="button button--small"
         type="button"
         [disabled]="!type.enabled"
         (click)="runNow(type.code)"
@@ -119,7 +119,7 @@
   }
 </section>
 
-<section class="card jobs" aria-label="Jobs">
+<section class="section jobs" aria-label="Jobs">
   <div class="jobs__toolbar">
     <div class="tabs" role="group" aria-label="Which jobs">
       @for (item of tabs; track item.tab) {
@@ -135,7 +135,7 @@
     </div>
     <label class="jobs__filter">
       <span class="muted">Type</span>
-      <select (change)="selectType($event)">
+      <select class="select" (change)="selectType($event)">
         <option [value]="allTypes">All types</option>
         @for (type of typeList(); track type.code) {
           <option [value]="type.code">{{ type.name }}</option>
@@ -146,7 +146,7 @@
 
   @if (jobPage(); as page) {
     @if (page.content.length === 0) {
-      <p class="muted jobs__empty">No jobs here.</p>
+      <p class="empty">No jobs here.</p>
     } @else {
       <div class="table-wrap">
         <table class="table">
@@ -165,7 +165,7 @@
           <tbody>
             @for (job of page.content; track job.id) {
               <tr class="job">
-                <td>
+                <td class="job__name">
                   <a [routerLink]="jobPath(job.id)">{{ nameOf(job.type) }}</a>
                 </td>
                 <td><app-job-status-badge [status]="job.status" /></td>
@@ -185,12 +185,20 @@
                 </td>
                 <td class="job__actions">
                   @if (canStop(job)) {
-                    <button class="button button--small" type="button" (click)="stop(job)">
+                    <button
+                      class="button button--small button--danger"
+                      type="button"
+                      (click)="stop(job)"
+                    >
                       Stop
                     </button>
                   }
                   @if (canRemove(job)) {
-                    <button class="button button--small" type="button" (click)="remove(job)">
+                    <button
+                      class="button button--small button--danger"
+                      type="button"
+                      (click)="remove(job)"
+                    >
                       Remove
                     </button>
                   }
