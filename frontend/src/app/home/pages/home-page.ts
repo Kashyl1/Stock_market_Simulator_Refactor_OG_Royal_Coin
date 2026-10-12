@@ -18,7 +18,7 @@ interface JourneyStep {
 
 const FEATURES: readonly Feature[] = [
   {
-    title: 'A wallet of play money',
+    title: 'A wallet of virtual money',
     description:
       'Every account gets its own wallet. Cash moves only through recorded entries, so the balance always adds up.',
   },
@@ -50,8 +50,8 @@ const JOURNEY: readonly JourneyStep[] = [
     description: 'We send a one-time link; the account stays pending until you use it.',
   },
   {
-    title: 'Get your wallet',
-    description: 'An empty wallet is created with the account, ready for its play money.',
+    title: 'Get your starting money',
+    description: 'Once your e-mail is verified, your main account receives its virtual money.',
   },
   {
     title: 'Trade and track',

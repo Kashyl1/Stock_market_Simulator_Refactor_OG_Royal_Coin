@@ -1,6 +1,6 @@
 # Trading Simulator
 
-A virtual trading platform: sign up, get a play-money wallet, trade crypto, stocks and ETFs,
+A virtual trading platform: sign up, get a wallet of virtual money, trade crypto, stocks and ETFs,
 and follow how your portfolios perform. No real money, no real brokerage.
 
 ## Stack

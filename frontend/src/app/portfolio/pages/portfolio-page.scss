@@ -1,7 +1,7 @@
 :host {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-lg);
+  gap: var(--space-xl);
 }
 
 .page-header {
@@ -15,7 +15,8 @@
   gap: var(--space-sm);
 }
 
-h2 {
-  font-size: 1.15rem;
-  margin: 0 0 var(--space-md);
+.form-card {
+  display: grid;
+  gap: var(--space-sm);
+  justify-items: start;
 }

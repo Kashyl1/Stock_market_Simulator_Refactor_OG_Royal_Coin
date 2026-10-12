@@ -1,16 +1,25 @@
 import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  input,
+  linkedSignal,
+  output,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AccountView } from '../account/account-models';
 import { toFailure } from '../core/error-response';
-import { loadedValue } from '../core/loaded-value';
-import { MoneyPipe } from '../money/money.pipe';
+import { MISSING_AMOUNT, MoneyPipe } from '../money/money.pipe';
 import {
   DIRECTION_LABELS,
   PortfolioView,
   TransferDirection,
+  TransferQuoteView,
   TransferView,
 } from './portfolio-models';
 import { PortfolioService } from './portfolio.service';
@@ -19,6 +28,19 @@ export const RATE_FORMAT = '1.2-6';
 export const SMALLEST_AMOUNT = 0.01;
 
 const DIRECTIONS: readonly TransferDirection[] = [TransferDirection.In, TransferDirection.Out];
+
+interface QuoteState {
+  readonly quote: TransferQuoteView | undefined;
+  readonly loading: boolean;
+  readonly direction: TransferDirection;
+}
+
+function keptWhileLoading(
+  state: QuoteState,
+  previous: TransferQuoteView | undefined,
+): TransferQuoteView | undefined {
+  return state.loading && previous?.direction === state.direction ? previous : undefined;
+}
 
 @Component({
   selector: 'app-transfer-form',
@@ -39,6 +61,7 @@ export class TransferForm {
   protected readonly directionLabels = DIRECTION_LABELS;
   protected readonly rateFormat = RATE_FORMAT;
   protected readonly inward = TransferDirection.In;
+  protected readonly missing = MISSING_AMOUNT;
 
   protected readonly direction = signal<TransferDirection>(TransferDirection.In);
   protected readonly submitting = signal(false);
@@ -70,15 +93,26 @@ export class TransferForm {
     }
     return { portfolioId: this.portfolio().id, direction: this.direction(), amount };
   });
-  protected readonly preview = loadedValue(this.quote);
+  protected readonly preview = linkedSignal<QuoteState, TransferQuoteView | undefined>({
+    source: () => ({
+      quote: this.quote.hasValue() ? this.quote.value() : undefined,
+      loading: this.quote.isLoading(),
+      direction: this.direction(),
+    }),
+    computation: (state, previous) => state.quote ?? keptWhileLoading(state, previous?.value),
+  });
+  protected readonly sameCurrency = computed(
+    () => this.portfolio().currency === this.mainCurrency(),
+  );
+  protected readonly arrivingCurrency = computed(() =>
+    this.isIn() ? this.portfolio().currency : this.mainCurrency(),
+  );
   protected readonly arriving = computed(() => {
     const preview = this.preview();
     if (preview === undefined) {
-      return undefined;
+      return null;
     }
-    return this.isIn()
-      ? { amount: preview.amount, currency: preview.currency }
-      : { amount: preview.mainAmount, currency: preview.mainCurrency };
+    return preview.direction === TransferDirection.In ? preview.amount : preview.mainAmount;
   });
   protected readonly quoteFailure = computed(() => {
     const error = this.quote.error();

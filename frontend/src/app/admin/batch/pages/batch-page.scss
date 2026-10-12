@@ -33,7 +33,7 @@
   justify-content: space-between;
   gap: var(--space-md);
   padding: var(--space-md) var(--space-lg);
-  border: 2px solid var(--color-negative);
+  border: 1px solid var(--color-negative);
   border-radius: var(--radius-lg);
   background: var(--color-negative-soft);
   color: var(--color-negative);
@@ -151,17 +151,13 @@
   gap: var(--space-xs);
 }
 
-.jobs__filter select {
-  padding: 0.35rem 0.5rem;
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-md);
-  font: inherit;
-  background: var(--color-surface);
-  color: var(--color-ink);
+.jobs__filter .select {
+  min-height: var(--control-height-small);
 }
 
-.jobs__empty {
-  padding-block: var(--space-md);
+.job__name {
+  white-space: nowrap;
+  font-weight: 600;
 }
 
 .job__actions {

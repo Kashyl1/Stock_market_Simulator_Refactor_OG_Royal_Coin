@@ -10,8 +10,8 @@
 
 .progress__bar {
   display: flex;
-  height: 0.5rem;
-  border-radius: var(--radius-sm);
+  height: 0.45rem;
+  border-radius: var(--radius-pill);
   overflow: hidden;
   background: var(--color-surface-sunken);
 }

@@ -1,4 +1,4 @@
-<a class="back" [routerLink]="paths.AdminBatch">All batch jobs</a>
+<a class="back-link" [routerLink]="paths.AdminBatch">All batch jobs</a>
 
 @if (failure(); as message) {
   <p class="notice notice--error" role="alert">{{ message }}</p>
@@ -59,10 +59,14 @@
 
     <div class="summary__actions">
       @if (canStop(job)) {
-        <button class="button button--small" type="button" (click)="stop(job)">Stop</button>
+        <button class="button button--small button--danger" type="button" (click)="stop(job)">
+          Stop
+        </button>
       }
       @if (canRemove(job)) {
-        <button class="button button--small" type="button" (click)="remove(job)">Remove</button>
+        <button class="button button--small button--danger" type="button" (click)="remove(job)">
+          Remove
+        </button>
       }
       @if (canAcknowledge(job)) {
         <button class="button button--small" type="button" (click)="acknowledge(job)">
@@ -72,7 +76,7 @@
     </div>
   </section>
 
-  <section class="card items" aria-label="Items">
+  <section class="section items" aria-label="Items">
     <div class="items__toolbar">
       <h2>Items</h2>
       <div class="tabs" role="group" aria-label="Which items">
@@ -97,7 +101,7 @@
 
     @if (itemPage(); as page) {
       @if (page.content.length === 0) {
-        <p class="muted">No items here.</p>
+        <p class="empty">No items here.</p>
       } @else {
         <div class="table-wrap">
           <table class="table">

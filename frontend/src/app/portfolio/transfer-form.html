@@ -1,17 +1,18 @@
 <section class="card transfer" aria-label="Move money">
-  <h2>Move money</h2>
-
-  <div class="tabs" role="group" aria-label="Direction">
-    @for (option of directions; track option) {
-      <button
-        class="button button--small"
-        type="button"
-        [attr.aria-pressed]="direction() === option"
-        (click)="choose(option)"
-      >
-        {{ directionLabels[option] }}
-      </button>
-    }
+  <div class="transfer__header">
+    <h2>Move money</h2>
+    <div class="tabs" role="group" aria-label="Direction">
+      @for (option of directions; track option) {
+        <button
+          class="button button--small"
+          type="button"
+          [attr.aria-pressed]="direction() === option"
+          (click)="choose(option)"
+        >
+          {{ directionLabels[option] }}
+        </button>
+      }
+    </div>
   </div>
 
   <p class="muted transfer__explanation">
@@ -30,9 +31,9 @@
     <div class="notice notice--success" role="status">
       @if (transfer.direction === inward) {
         {{ transfer.mainAmount | money: transfer.mainCurrency }} left your main account,
-        {{ transfer.amount | money: transfer.currency }} arrived.
+        {{ transfer.amount | money: transfer.currency }} arrived in {{ portfolio().name }}.
       } @else {
-        {{ transfer.amount | money: transfer.currency }} left the portfolio,
+        {{ transfer.amount | money: transfer.currency }} left {{ portfolio().name }},
         {{ transfer.mainAmount | money: transfer.mainCurrency }} arrived in your main account.
       }
     </div>
@@ -48,29 +49,35 @@
       }
     </div>
 
-    @if (preview(); as quote) {
-      <dl class="figures transfer__preview">
-        @if (quote.fxRate !== null) {
-          <div>
-            <dt>Rate</dt>
-            <dd>
-              1 {{ quote.mainCurrency }} = {{ quote.fxRate | number: rateFormat }}
-              {{ quote.currency }}
-            </dd>
-          </div>
-          <div>
-            <dt>Conversion fee</dt>
-            <dd>{{ quote.fxFeeAmount | money: quote.mainCurrency }}</dd>
-          </div>
-        }
-        @if (arriving(); as arrival) {
-          <div>
-            <dt>Arrives</dt>
-            <dd class="figures__value">{{ arrival.amount | money: arrival.currency }}</dd>
-          </div>
-        }
-      </dl>
-    } @else if (quoteFailure(); as message) {
+    <dl class="figures transfer__preview" aria-live="polite">
+      <div>
+        <dt>Rate</dt>
+        <dd>
+          @if (sameCurrency()) {
+            Same currency
+          } @else if (preview()?.fxRate; as rate) {
+            1 {{ mainCurrency() }} = {{ rate | number: rateFormat }} {{ portfolio().currency }}
+          } @else {
+            {{ missing }}
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>Conversion fee</dt>
+        <dd>
+          @if (sameCurrency()) {
+            None
+          } @else {
+            {{ preview()?.fxFeeAmount | money: mainCurrency() }}
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>Arrives</dt>
+        <dd class="figures__value">{{ arriving() | money: arrivingCurrency() }}</dd>
+      </div>
+    </dl>
+    @if (quoteFailure(); as message) {
       <p class="field__error">{{ message }}</p>
     }
 

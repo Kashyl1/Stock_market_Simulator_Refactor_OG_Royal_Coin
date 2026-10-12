@@ -2,35 +2,47 @@
 
 <header class="top-bar">
   <div class="top-bar__inner">
-    <a class="brand" [routerLink]="brandLink()">{{ appName }}</a>
+    <a class="brand" [routerLink]="brandLink()">
+      <span class="brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M4 16l5-5 4 4 7-7" />
+          <path d="M15 8h5v5" />
+        </svg>
+      </span>
+      {{ appName }}
+    </a>
 
     <nav class="top-bar__nav" aria-label="Main">
       @if (currentUser(); as user) {
         @if (isAdmin()) {
           <a
-            class="button button--small"
+            class="button button--ghost button--small"
             [routerLink]="paths.AdminBatch"
             routerLinkActive="is-active"
             >Admin panel</a
           >
         }
+        <app-theme-toggle />
         <a
-          class="button button--small"
+          class="button button--ghost button--small user"
           [routerLink]="paths.Dashboard"
           routerLinkActive="is-active"
-          >{{ user.displayName }}</a
         >
-        <button class="button button--small" type="button" (click)="signOut()">Log out</button>
+          <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+          <span class="user__name">{{ user.displayName }}</span>
+        </a>
+        <button class="button button--ghost button--small" type="button" (click)="signOut()">
+          Log out
+        </button>
       } @else {
-        <a class="button button--small" [routerLink]="paths.Login" routerLinkActive="is-active"
+        <app-theme-toggle />
+        <a
+          class="button button--ghost button--small"
+          [routerLink]="paths.Login"
+          routerLinkActive="is-active"
           >Log in</a
         >
-        <a
-          class="button button--small button--primary"
-          [routerLink]="paths.Register"
-          routerLinkActive="is-active"
-          >Create account</a
-        >
+        <a class="button button--small" [routerLink]="paths.Register">Create account</a>
       }
     </nav>
   </div>
@@ -43,6 +55,6 @@
 <footer class="footer">
   <div class="footer__inner">
     <span>{{ appName }} &middot; {{ currentYear }}</span>
-    <span class="muted">{{ disclaimer }}</span>
+    <span>{{ disclaimer }}</span>
   </div>
 </footer>

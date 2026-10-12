@@ -5,25 +5,28 @@
 
 .hero {
   display: grid;
-  gap: var(--space-sm);
+  gap: var(--space-md);
   justify-items: start;
+  padding-block: var(--space-lg) var(--space-md);
 }
 
 .hero__eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.75rem;
-  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-soft);
   color: var(--color-accent-strong);
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 h1 {
-  font-size: clamp(2rem, 5vw, 3rem);
+  font-size: clamp(2.2rem, 6vw, 3.4rem);
+  letter-spacing: -0.035em;
 }
 
 .hero__tagline {
-  max-width: 46rem;
-  font-size: 1.1rem;
+  max-width: 44rem;
+  font-size: 1.15rem;
   color: var(--color-ink-muted);
 }
 
@@ -40,8 +43,12 @@ h1 {
   gap: var(--space-md);
 }
 
+.feature {
+  padding: var(--space-md) 1.25rem;
+}
+
 .feature h2 {
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   margin-bottom: var(--space-xs);
 }
 
@@ -123,4 +130,16 @@ h1 {
 
 .status[data-status='offline'] .dot {
   background: var(--color-negative);
+}
+
+.disclaimer {
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space-md) 1.25rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-sunken);
+}
+
+.disclaimer h2 {
+  font-size: 0.95rem;
 }
